@@ -1,159 +1,115 @@
-#!/bin/env node
-//  OpenShift sample Node application
-var express = require('express');
-var fs      = require('fs');
+var express  = require('express');
+var app      = express();
+var request = require('request');
+var http = require('http');
+var cheerio = require('cheerio');
+var url = require('url');
+var config = require('./config.json');
 
+var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || config.hostAddress;
+var server_port = process.env.OPENSHIFT_NODEJS_PORT || config.hostPort;
+var server_exeternal_address = config.externalAddress;
 
-/**
- *  Define the sample application.
- */
-var SampleApp = function() {
+function makeResponseBody(body, reqUrl) {
+    
+    var parsed_url = new url.parse(reqUrl);
+    var domain =  parsed_url.hostname; 
+    var protocol = parsed_url.protocol;
+    
+    $ = cheerio.load(body);
 
-    //  Scope.
-    var self = this;
-
-
-    /*  ================================================================  */
-    /*  Helper functions.                                                 */
-    /*  ================================================================  */
-
-    /**
-     *  Set up server IP address and port # using env variables/defaults.
-     */
-    self.setupVariables = function() {
-        //  Set the environment variables we need.
-        self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
-        self.port      = process.env.OPENSHIFT_NODEJS_PORT || 8080;
-
-        if (typeof self.ipaddress === "undefined") {
-            //  Log errors on OpenShift but continue w/ 127.0.0.1 - this
-            //  allows us to run/test the app locally.
-            console.warn('No OPENSHIFT_NODEJS_IP var, using 127.0.0.1');
-            self.ipaddress = "127.0.0.1";
-        };
-    };
-
-
-    /**
-     *  Populate the cache.
-     */
-    self.populateCache = function() {
-        if (typeof self.zcache === "undefined") {
-            self.zcache = { 'index.html': '' };
-        }
-
-        //  Local cache for static content.
-        self.zcache['index.html'] = fs.readFileSync('./index.html');
-    };
-
-
-    /**
-     *  Retrieve entry (content) from cache.
-     *  @param {string} key  Key identifying content to retrieve from cache.
-     */
-    self.cache_get = function(key) { return self.zcache[key]; };
-
-
-    /**
-     *  terminator === the termination handler
-     *  Terminate server on receipt of the specified signal.
-     *  @param {string} sig  Signal to terminate on.
-     */
-    self.terminator = function(sig){
-        if (typeof sig === "string") {
-           console.log('%s: Received %s - terminating sample app ...',
-                       Date(Date.now()), sig);
-           process.exit(1);
-        }
-        console.log('%s: Node server stopped.', Date(Date.now()) );
-    };
-
-
-    /**
-     *  Setup termination handlers (for exit and a list of signals).
-     */
-    self.setupTerminationHandlers = function(){
-        //  Process on exit and signals.
-        process.on('exit', function() { self.terminator(); });
-
-        // Removed 'SIGPIPE' from the list - bugz 852598.
-        ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
-         'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
-        ].forEach(function(element, index, array) {
-            process.on(element, function() { self.terminator(element); });
-        });
-    };
-
-
-    /*  ================================================================  */
-    /*  App server functions (main app logic here).                       */
-    /*  ================================================================  */
-
-    /**
-     *  Create the routing table entries + handlers for the application.
-     */
-    self.createRoutes = function() {
-        self.routes = { };
-
-        self.routes['/asciimo'] = function(req, res) {
-            var link = "http://i.imgur.com/kmbjB.png";
-            res.send("<html><body><img src='" + link + "'></body></html>");
-        };
-
-        self.routes['/'] = function(req, res) {
-            res.setHeader('Content-Type', 'text/html');
-            res.send(self.cache_get('index.html') );
-        };
-    };
-
-
-    /**
-     *  Initialize the server (express) and create the routes and register
-     *  the handlers.
-     */
-    self.initializeServer = function() {
-        self.createRoutes();
-        self.app = express.createServer();
-
-        //  Add handlers for the app (from the routes).
-        for (var r in self.routes) {
-            self.app.get(r, self.routes[r]);
+    var responseBody = '';
+    
+    // Thanks to http://bettermotherfuckingwebsite.com for the styles
+    responseBody += '<html><head><title>Gundog</title><style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}</style></head><body>';
+    
+    responseBody += '<div style="text-align:center"><a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
+    
+    var number_p = $(body).find('p,h1,h2,h3').length;
+    
+    for (var i = 0; i < number_p; i++) {
+        
+        paragraph = $(body).find('p,h1,h2,h3').eq(i).html();
+        
+        if (paragraph.length > 20) {
+        
+            responseBody += paragraph;
+            responseBody += '</br>';
+            responseBody += '</br>';
         }
     };
+    
+    responseBody += '</body></html>';
+    
+    $ = cheerio.load(responseBody);
+    
+    $('a').each(function(i, element){
+      var a = $(this);
+      
+      // Relative link
+      if (a.attr('href')[0] === '/') {
+          a.attr('href',function(i,v) {
+            return 'http://' + server_exeternal_address + '/' + domain + v;
+          });
+      }
+      else {
+         a.attr('href',function(i,v) {
+            return 'http://' + server_exeternal_address + '/' + v;
+          });
+      }
+    });
+    
+    
+    $('#closeGunDog').attr('href', reqUrl);
+    
+    return $.html();
+};
 
+function makeFailureResponseBody(body, reqUrl) {
+    
+    var responseBody = '';
+    
+    // Thanks to http://bettermotherfuckingwebsite.com for the styles
+    responseBody += '<html><head><title>Gundog</title><style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}</style></head><body>';
+    
+    responseBody += '<p>Gundog experienced a problem.</p>';
+    responseBody += '<p>You can try the requested url yourself:</p>';
+    responseBody += '<a href="' + reqUrl + '">' + reqUrl + '</a>';
+    
+    responseBody += '</body></html>';
+    
+    return responseBody;
+};
 
-    /**
-     *  Initializes the sample application.
-     */
-    self.initialize = function() {
-        self.setupVariables();
-        self.populateCache();
-        self.setupTerminationHandlers();
-
-        // Create the express server and routes.
-        self.initializeServer();
+app.all("/*", function(req, res) {
+    var reqUrl = req.url.substring(1);
+    
+    if (reqUrl.substring(0,12) === '?gundog_url='){
+        reqUrl = req.url.substring(13);
     };
+    
+    reqUrl = decodeURIComponent(reqUrl);
+    
+    if(reqUrl.length > 0){
+        res.writeHead(200, {'Content-Type': 'text/html'});
+    
+        request(reqUrl, function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                var responseBody = makeResponseBody(body, reqUrl);
+                res.write(responseBody);            }
+            else {
+                var responseBody = makeFailureResponseBody(body, reqUrl);
+                res.write(responseBody);
+            }
+            res.send();
+        })
+    }
+    else {
+        res.sendfile('index.html');
+    }
+});
 
-
-    /**
-     *  Start the server (starts up the sample application).
-     */
-    self.start = function() {
-        //  Start the app on the specific interface (and port).
-        self.app.listen(self.port, self.ipaddress, function() {
-            console.log('%s: Node server started on %s:%d ...',
-                        Date(Date.now() ), self.ipaddress, self.port);
-        });
-    };
-
-};   /*  Sample Application.  */
-
-
-
-/**
- *  main():  Main code.
- */
-var zapp = new SampleApp();
-zapp.initialize();
-zapp.start();
-
+console.log(server_ip_address, server_port);
+app.listen(server_port, server_ip_address, function () {
+  console.log( "Listening on " + server_ip_address + ", server_port " + server_port )
+});
