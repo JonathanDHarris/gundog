@@ -5,25 +5,21 @@ var http = require('http');
 var cheerio = require('cheerio');
 var url = require('url');
 var config = require('./config.json');
+var cookieParser = require('cookie-parser')
+app.use(cookieParser());
 
 var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || config.hostAddress;
 var server_port = process.env.OPENSHIFT_NODEJS_PORT || config.hostPort;
 var server_exeternal_address = config.externalAddress;
 
-function makeResponseBody(body, reqUrl) {
-    
-    var parsed_url = new url.parse(reqUrl);
-    var domain =  parsed_url.hostname; 
-    var protocol = parsed_url.protocol;
-    
+function makeResponseBody(body) {
     $ = cheerio.load(body);
 
     var responseBody = '';
+
+    responseBody += '<html><head><title>Gundog</title>' + getTheme() + '</head><body>';
     
-    // Thanks to http://bettermotherfuckingwebsite.com for the styles
-    responseBody += '<html><head><title>Gundog</title><style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}</style></head><body>';
-    
-    responseBody += '<div style="text-align:center"><a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
+    responseBody += '<div style="text-align:center"><a id="gunDogHome" href="gun_dog_home">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
     
     var number_p = $(body).find('p,h1,h2,h3').length;
     
@@ -41,26 +37,58 @@ function makeResponseBody(body, reqUrl) {
     
     responseBody += '</body></html>';
     
+    return responseBody;
+}
+
+function parseLinks(responseBody, reqUrl) {
+    var linkColour;
+    
+    // Must be set here because you can't do inline stlyes on psuedo-selectors
+    if (cookies && cookies.theme) {
+        if (cookies.theme === 'dark') {
+            linkColour = 'yellow';
+        }
+        else {
+            linkColour = 'blue';
+        }
+    }
+    
+    var parsed_url;
+    var domain;
+    var protocol;
+    
+    if (reqUrl) {
+        parsed_url = new url.parse(reqUrl);
+        domain =  parsed_url.hostname; 
+        protocol = parsed_url.protocol;
+    }
+    
     $ = cheerio.load(responseBody);
     
     $('a').each(function(i, element){
       var a = $(this);
       
-      // Relative link
-      if (a.attr('href')[0] === '/') {
-          a.attr('href',function(i,v) {
+      a.css('color', linkColour);
+      
+      if (a.attr('href') && a.attr('href')[0]) {
+        // Relative link
+        if (a.attr('href')[0] === '/') {
+            a.attr('href',function(i,v) {
             return 'http://' + server_exeternal_address + '/' + domain + v;
-          });
-      }
-      else {
-         a.attr('href',function(i,v) {
+            });
+        }
+        else {
+            a.attr('href',function(i,v) {
             return 'http://' + server_exeternal_address + '/' + v;
-          });
+            });
+        }
       }
     });
     
-    
+    $('#gunDogHome').attr('href', 'http://' + server_exeternal_address + '/');
     $('#closeGunDog').attr('href', reqUrl);
+    $('#setThemeLight').attr('href', '/setThemeLight');
+    $('#setThemeDark').attr('href', '/setThemeDark');
     
     return $.html();
 };
@@ -69,8 +97,7 @@ function makeFailureResponseBody(body, reqUrl) {
     
     var responseBody = '';
     
-    // Thanks to http://bettermotherfuckingwebsite.com for the styles
-    responseBody += '<html><head><title>Gundog</title><style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}</style></head><body>';
+    responseBody += '<html><head><title>Gundog</title>' + getTheme() + '</head><body>';
     
     responseBody += '<p>Gundog experienced a problem.</p>';
     responseBody += '<p>You can try the requested url yourself:</p>';
@@ -81,8 +108,51 @@ function makeFailureResponseBody(body, reqUrl) {
     return responseBody;
 };
 
+function makeIndexPage() {
+    var responseBody = '';
+    
+    responseBody += '<html><head><title>Gundog</title>' + getTheme() + '</head><body></br></br></br><div style="margin:0 auto" align=center> <h3>Gundog</h3><form action="/" method="GET"><input type="text" name="gundog_url" value="" style="width: 600px;" /><br /></form></div></br></br></br><p>Give gundog a website address and it will return a stripped down version of the site.</p><p>Gundog was created for use with sites containing a lot of banners and scripts that made browsing tedious and for mobile browsing.</p><p>It will work well with pages containing a lot of text such as articles but not so well on other pages such as news front pages.</p></br></br></br><div style="text-align:center"><a id="setThemeLight" href="">Light Theme</a>&nbsp;&nbsp;&nbsp;<a id="setThemeDark" href="">Dark Theme</a></div></body></html>'
+    
+    return responseBody;
+};
+
+function getTheme() {
+    // Thanks to http://bettermotherfuckingwebsite.com for bluk of the styling
+    var theme = '';
+    
+    if (cookies && cookies.theme) {
+        if (cookies.theme === 'dark') {
+            theme = '<style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;color:white;background-color:black;padding:0 10px}h1,h2,h3{line-height:1.2};</style>';
+        }
+        else {
+            theme = '<style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}</style>';
+        }
+    }
+    
+    return theme;
+};
+
 app.all("/*", function(req, res) {
+    cookies = req.cookies;
+    
     var reqUrl = req.url.substring(1);
+ 
+    if (reqUrl === 'setThemeLight') {
+        res.cookie('theme', 'light');
+        cookies.theme = 'light';
+        res.write(parseLinks(makeIndexPage()));
+        res.send();
+        return;
+    };
+    
+    
+    if (reqUrl === 'setThemeDark') {
+        res.cookie('theme', 'dark');
+        cookies.theme = 'dark';
+        res.write(parseLinks(makeIndexPage()));
+        res.send();
+        return;
+    };
     
     if (reqUrl.substring(0,12) === '?gundog_url='){
         reqUrl = req.url.substring(13);
@@ -95,17 +165,18 @@ app.all("/*", function(req, res) {
     
         request(reqUrl, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                var responseBody = makeResponseBody(body, reqUrl);
-                res.write(responseBody);            }
+                var responseBody = makeResponseBody(body);
+                res.write(parseLinks(responseBody, reqUrl));            }
             else {
                 var responseBody = makeFailureResponseBody(body, reqUrl);
-                res.write(responseBody);
+                res.write(parseLinks(responseBody));
             }
             res.send();
         })
     }
     else {
-        res.sendfile('index.html');
+        res.write(parseLinks(makeIndexPage()));
+        res.send();
     }
 });
 
