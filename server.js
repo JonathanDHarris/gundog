@@ -140,6 +140,7 @@ app.all("/*", function(req, res) {
     if (reqUrl === 'setThemeLight') {
         res.cookie('theme', 'light');
         cookies.theme = 'light';
+        res.writeHead(200, {'Content-Type': 'text/html'});
         res.write(parseLinks(makeIndexPage()));
         res.send();
         return;
@@ -149,6 +150,7 @@ app.all("/*", function(req, res) {
     if (reqUrl === 'setThemeDark') {
         res.cookie('theme', 'dark');
         cookies.theme = 'dark';
+        res.writeHead(200, {'Content-Type': 'text/html'});
         res.write(parseLinks(makeIndexPage()));
         res.send();
         return;
@@ -160,7 +162,7 @@ app.all("/*", function(req, res) {
     
     reqUrl = decodeURIComponent(reqUrl);
     
-    if(reqUrl.length > 0){
+    if(reqUrl.length > 0) {
         res.writeHead(200, {'Content-Type': 'text/html'});
     
         request(reqUrl, function (error, response, body) {
@@ -175,6 +177,7 @@ app.all("/*", function(req, res) {
         })
     }
     else {
+        res.writeHead(200, {'Content-Type': 'text/html'});
         res.write(parseLinks(makeIndexPage()));
         res.send();
     }
