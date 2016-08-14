@@ -41,15 +41,12 @@ function makeResponseBody(body) {
 }
 
 function parseLinks(responseBody, reqUrl) {
-    var linkColour;
+    var linkColour = 'blue';
     
     // Must be set here because you can't do inline stlyes on psuedo-selectors
     if (cookies && cookies.theme) {
         if (cookies.theme === 'dark') {
             linkColour = 'yellow';
-        }
-        else {
-            linkColour = 'blue';
         }
     }
     
@@ -118,14 +115,11 @@ function makeIndexPage() {
 
 function getTheme() {
     // Thanks to http://bettermotherfuckingwebsite.com for bluk of the styling
-    var theme = '';
+    var theme = '<style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}</style>';
     
     if (cookies && cookies.theme) {
         if (cookies.theme === 'dark') {
             theme = '<style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;color:white;background-color:black;padding:0 10px}h1,h2,h3{line-height:1.2};</style>';
-        }
-        else {
-            theme = '<style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}</style>';
         }
     }
     
