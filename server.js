@@ -96,34 +96,57 @@ function parseLinks(responseBody, reqUrl) {
     
     $('#gunDogHome').attr('href', 'http://' + server_exeternal_address + '/');
     $('#closeGunDog').attr('href', reqUrl);
+    $('#preferences').attr('href', '/preferences');
     $('#setThemeLight').attr('href', '/setThemeLight');
     $('#setThemeDark').attr('href', '/setThemeDark');
     
     return $.html();
 };
 
-function makeFailureResponseBody(body, reqUrl) {
+function makeFailureResponseBody(reqUrl) {
     
-    var responseBody = '';
+    var response = '';
     
-    responseBody += '<html><head><title>Gundog</title>' + getTheme() + '</head><body>';
+    response += '<html><head><title>Gundog</title>' + getTheme() + '</head><body>';
     
-    responseBody += '<p>Gundog experienced a problem.</p>';
-    responseBody += '<p>You can try the requested url yourself:</p>';
-    responseBody += '<a href="' + reqUrl + '">' + reqUrl + '</a>';
+    response += '<p>Gundog experienced a problem.</p>';
+    response += '<p>You can try the requested url yourself:</p>';
+    response += '<a href="' + reqUrl + '">' + reqUrl + '</a>';
     
-    responseBody += '</body></html>';
+    response += '</body></html>';
     
-    return responseBody;
+    return response;
 };
 
 function makeIndexPage() {
-    var responseBody = '';
+    var response = '';
     
-    responseBody += '<html><head><title>Gundog</title>' + getTheme() + '</head><body></br></br></br><div style="margin:0 auto" align=center> <h3>Gundog</h3><form action="/" method="GET"><input type="text" name="gundog_url" value="" style="width: 600px;" /><br /></form></div></br></br></br><p>Give gundog a website address and it will return a stripped down version of the site.</p><p>Gundog was created for use with sites containing a lot of banners and scripts that made browsing tedious and for mobile browsing.</p><p>It will work well with pages containing a lot of text such as articles but not so well on other pages such as news front pages.</p></br></br></br><div style="text-align:center"><a id="setThemeLight" href="">Light Theme</a>&nbsp;&nbsp;&nbsp;<a id="setThemeDark" href="">Dark Theme</a></div></body></html>'
+    response += '<html><head><title>Gundog</title>' + getTheme() + '</head><body></br></br></br><div style="margin:0 auto" align=center> <h3>Gundog</h3><form action="/" method="GET"><input type="text" name="gundog_url" value="" style="width: 600px;" /><br /></form></div></br></br></br><p>Give gundog a website address and it will return a stripped down version of the site.</p><p>Gundog was created for use with sites containing a lot of banners and scripts that made browsing tedious and for mobile browsing.</p><p>It will work well with pages containing a lot of text such as articles but not so well on other pages such as news front pages.</p></br></br></br><div style="text-align:center"><a id="preferences" href="">Preferences</a></div></body></html>'
     
-    return responseBody;
+    return response;
 };
+
+function makePreferencesPage() {
+    var response = '';
+    
+    response += '<html><head><title>Gundog</title>' + getTheme() + '</head><body>';
+    
+    response += '<h3>Gundog Preferences</h3>';
+    
+    if (cookies && cookies.theme && cookies.theme === 'dark') {
+       response += '<a id="setThemeLight" href="">Light Theme</a>';
+    } else {
+        response += '<a id="setThemeDark" href="">Dark Theme</a>';
+    }
+    
+    response += '</br></br>'
+    
+    response += '<a id="gunDogHome" href="gun_dog_home">Back</a>';
+    
+    response += '</body></html>';
+    
+    return response;
+}
 
 function getTheme() {
     // Thanks to http://bettermotherfuckingwebsite.com for bluk of the styling
@@ -147,7 +170,7 @@ app.all("/*", function(req, res) {
         res.cookie('theme', 'light');
         cookies.theme = 'light';
         res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(parseLinks(makeIndexPage()));
+        res.write(parseLinks(makePreferencesPage()));
         res.send();
         return;
     };
@@ -157,10 +180,17 @@ app.all("/*", function(req, res) {
         res.cookie('theme', 'dark');
         cookies.theme = 'dark';
         res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(parseLinks(makeIndexPage()));
+        res.write(parseLinks(makePreferencesPage()));
         res.send();
         return;
     };
+    
+    if (reqUrl === 'preferences') {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.write(parseLinks(makePreferencesPage()));
+        res.send();
+        return;
+    }
     
     if (reqUrl.substring(0,12) === '?gundog_url='){
         reqUrl = req.url.substring(13);
@@ -176,7 +206,7 @@ app.all("/*", function(req, res) {
                 var responseBody = makeResponseBody(body);
                 res.write(parseLinks(responseBody, reqUrl));            }
             else {
-                var responseBody = makeFailureResponseBody(body, reqUrl);
+                var responseBody = makeFailureResponseBody(reqUrl);
                 res.write(parseLinks(responseBody));
             }
             res.send();
