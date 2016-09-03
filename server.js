@@ -62,19 +62,18 @@ function parseLinks(responseBody, reqUrl) {
         }
     }
     
-    var parsed_url;
     var domain;
-    var protocol;
-    
+    var reqHref;
+
     if (reqUrl) {
-        parsed_url = new url.parse(reqUrl);
+        var parsed_url = new url.parse(reqUrl);
         domain =  parsed_url.hostname; 
-        protocol = parsed_url.protocol;
+        reqHref  = parsed_url.href;
     }
     
     $ = cheerio.load(responseBody);
     
-    $('a').each(function(i, element){
+    $('a').each(function(index, value) {
       var a = $(this);
       
       a.css('color', linkColour);
@@ -82,14 +81,11 @@ function parseLinks(responseBody, reqUrl) {
       if (a.attr('href') && a.attr('href')[0]) {
         // Relative link
         if (a.attr('href')[0] === '/') {
-            a.attr('href',function(i,v) {
-            return 'http://' + server_exeternal_address + '/' + domain + v;
-            });
-        }
-        else {
-            a.attr('href',function(i,v) {
-            return 'http://' + server_exeternal_address + '/' + v;
-            });
+            a.attr('href','http://' + server_exeternal_address + '/' + domain + a.attr('href'));
+        } else if (a.attr('href')[0] === '#') {
+            a.attr('href', a.attr('href'));
+        } else {
+            a.attr('href', 'http://' + server_exeternal_address + '/' + a.attr('href'));
         }
       }
     });
@@ -182,7 +178,14 @@ app.all("/*", function(req, res) {
     
     var reqUrl = req.url.substring(1);
     
-        if (reqUrl === 'setHideImages') {
+    if (reqUrl.length === 0) {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.write(parseLinks(makeIndexPage()));
+        res.send();
+        return;
+    }
+    
+    if (reqUrl === 'setHideImages') {
         res.cookie('hideImages', 'true');
         cookies.hideImages = 'true';
         res.writeHead(200, {'Content-Type': 'text/html'});
@@ -229,30 +232,27 @@ app.all("/*", function(req, res) {
         reqUrl = req.url.substring(13);
     }
     
+    if (reqUrl.substring(0, 4) !== 'http') {
+        reqUrl = 'http%3A%2F%2F' + reqUrl;
+    }
+    
     reqUrl = decodeURIComponent(reqUrl);
-    
-    if(reqUrl.length > 0) {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-    
-        request(reqUrl, function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                var responseBody = makeResponseBody(body);
-                if (cookies && cookies.hideImages === 'true') {
-                    responseBody = hideImages(responseBody);
-                }
-                res.write(parseLinks(responseBody, reqUrl));
-            } else {
-                var responseBody = makeFailureResponseBody(reqUrl);
-                res.write(parseLinks(responseBody));
+
+    res.writeHead(200, {'Content-Type': 'text/html'});
+
+    request(reqUrl, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var responseBody = makeResponseBody(body);
+            if (cookies && cookies.hideImages === 'true') {
+                responseBody = hideImages(responseBody);
             }
-            res.send();
-        })
-    }
-    else {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(parseLinks(makeIndexPage()));
+            res.write(parseLinks(responseBody, reqUrl));
+        } else {
+            var responseBody = makeFailureResponseBody(reqUrl);
+            res.write(parseLinks(responseBody));
+        }
         res.send();
-    }
+    })
 });
 
 console.log(server_ip_address, server_port);
