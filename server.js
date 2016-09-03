@@ -99,7 +99,15 @@ function parseLinks(responseBody, reqUrl) {
     $('#preferences').attr('href', '/preferences');
     $('#setThemeLight').attr('href', '/setThemeLight');
     $('#setThemeDark').attr('href', '/setThemeDark');
+    $('#setShowImages').attr('href', '/setShowImages');
+    $('#setHideImages').attr('href', '/setHideImages');
     
+    return $.html();
+};
+
+function hideImages(responseBody) {
+    $ = cheerio.load(responseBody);
+    $('img').remove();
     return $.html();
 };
 
@@ -139,6 +147,14 @@ function makePreferencesPage() {
         response += '<a id="setThemeDark" href="">Dark Theme</a>';
     }
     
+    response += '</br>' ;
+    
+    if (cookies.hideImages === 'true') {
+       response += '<a id="setShowImages" href="">Show Images</a>';
+    } else {
+        response += '<a id="setHideImages" href="">Hide Images</a>';
+    }
+    
     response += '</br></br>'
     
     response += '<a id="gunDogHome" href="gun_dog_home">Back</a>';
@@ -165,6 +181,24 @@ app.all("/*", function(req, res) {
     cookies = req.cookies;
     
     var reqUrl = req.url.substring(1);
+    
+        if (reqUrl === 'setHideImages') {
+        res.cookie('hideImages', 'true');
+        cookies.hideImages = 'true';
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.write(parseLinks(makePreferencesPage()));
+        res.send();
+        return;
+    }
+    
+    if (reqUrl === 'setShowImages') {
+        res.cookie('hideImages', 'false');
+        cookies.hideImages = 'false';
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.write(parseLinks(makePreferencesPage()));
+        res.send();
+        return;
+    }
  
     if (reqUrl === 'setThemeLight') {
         res.cookie('theme', 'light');
@@ -173,8 +207,7 @@ app.all("/*", function(req, res) {
         res.write(parseLinks(makePreferencesPage()));
         res.send();
         return;
-    };
-    
+    }
     
     if (reqUrl === 'setThemeDark') {
         res.cookie('theme', 'dark');
@@ -183,7 +216,7 @@ app.all("/*", function(req, res) {
         res.write(parseLinks(makePreferencesPage()));
         res.send();
         return;
-    };
+    }
     
     if (reqUrl === 'preferences') {
         res.writeHead(200, {'Content-Type': 'text/html'});
@@ -194,7 +227,7 @@ app.all("/*", function(req, res) {
     
     if (reqUrl.substring(0,12) === '?gundog_url='){
         reqUrl = req.url.substring(13);
-    };
+    }
     
     reqUrl = decodeURIComponent(reqUrl);
     
@@ -204,8 +237,11 @@ app.all("/*", function(req, res) {
         request(reqUrl, function (error, response, body) {
             if (!error && response.statusCode == 200) {
                 var responseBody = makeResponseBody(body);
-                res.write(parseLinks(responseBody, reqUrl));            }
-            else {
+                if (cookies && cookies.hideImages === 'true') {
+                    responseBody = hideImages(responseBody);
+                }
+                res.write(parseLinks(responseBody, reqUrl));
+            } else {
                 var responseBody = makeFailureResponseBody(reqUrl);
                 res.write(parseLinks(responseBody));
             }
