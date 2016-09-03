@@ -21,23 +21,35 @@ function makeResponseBody(body) {
     
     responseBody += '<div style="text-align:center"><a id="gunDogHome" href="gun_dog_home">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
     
-    var number_p = $(body).find('p,h1,h2,h3').length;
+    var usable_elements = 'p, h1, h2, h3, ul, ol'
     
-    for (var i = 0; i < number_p; i++) {
+    var number_elements = $(body).find(usable_elements).length;
+    
+    // Print out elements like headers that might be useful
+    // But only print out things like lists if we think we're in the main body of the page
+    preAmbleFinished = false;
+    
+    for (var i = 0; i < number_elements; i++) {
         
-        paragraph = $(body).find('p,h1,h2,h3').eq(i).html();
+        element = $(body).find(usable_elements).eq(i);
         
-        if (paragraph.length > 20) {
+        if (preAmbleFinished === false) {
+            preAmbleFinished = element[0].name === 'p'
+        }
         
-            responseBody += paragraph;
-            responseBody += '</br>';
-            responseBody += '</br>';
+        if (preAmbleFinished || isPreAmble(element[0].name)) {
+            responseBody += element;
         }
     };
     
     responseBody += '</body></html>';
     
     return responseBody;
+}
+
+function isPreAmble(tagName) {
+    // I've found that in practice most sites only use h1 for headers you actually want to see
+    return tagName === 'h1'
 }
 
 function parseLinks(responseBody, reqUrl) {
