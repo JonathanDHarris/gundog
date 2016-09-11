@@ -97,6 +97,8 @@ function parseLinks(responseBody, reqUrl) {
     $('#setThemeDark').attr('href', '/setThemeDark');
     $('#setShowImages').attr('href', '/setShowImages');
     $('#setHideImages').attr('href', '/setHideImages');
+    $('#setViewportNormal').attr('href', '/setViewportNormal');
+    $('#setViewportMobile').attr('href', '/setViewportMobile');
     
     return $.html();
 };
@@ -125,7 +127,7 @@ function makeFailureResponseBody(reqUrl) {
 function makeIndexPage() {
     var response = '';
     
-    response += '<html><head><title>Gundog</title>' + getTheme() + '</head><body></br></br></br><div style="margin:0 auto" align=center> <h3>Gundog</h3><form action="/" method="GET"><input type="text" name="gundog_url" value="" style="width: 600px;" /><br /></form></div></br></br></br><p>Give gundog a website address and it will return a stripped down version of the site.</p><p>Gundog was created for use with sites containing a lot of banners and scripts that made browsing tedious and for mobile browsing.</p><p>It will work well with pages containing a lot of text such as articles but not so well on other pages such as news front pages.</p></br></br></br><div style="text-align:center"><a id="preferences" href="">Preferences</a></div></body></html>'
+    response += '<html><head><title>Gundog</title>' + getTheme() + '</head><body></br></br></br><div style="margin:0 auto" align=center> <h3>Gundog</h3><form action="/" method="GET"><input type="text" name="gundog_url" value="" style="width: ' + (cookies.maxWidth || '650px') + ';" /><br /></form></div></br></br></br><p>Give gundog a website address and it will return a stripped down version of the site.</p><p>Gundog was created for use with sites containing a lot of banners and scripts that made browsing tedious and for mobile browsing.</p><p>It will work well with pages containing a lot of text such as articles but not so well on other pages such as news front pages.</p></br></br></br><div style="text-align:center"><a id="preferences" href="">Preferences</a></div></body></html>'
     
     return response;
 };
@@ -153,6 +155,13 @@ function makePreferencesPage() {
     
     response += '</br></br>'
     
+    response += '<h3>Viewport Preferences</h3>'
+    response += '<a id="setViewportNormal" href="setViewportNormal">Normal</a>';
+    response += '</br>'
+    response += '<a id="setViewportMobile" href="setViewportMobile">Mobile</a>';
+    
+    response += '</br></br>'
+    
     response += '<a id="gunDogHome" href="gun_dog_home">Back</a>';
     
     response += '</body></html>';
@@ -161,18 +170,24 @@ function makePreferencesPage() {
 }
 
 function getTheme() {
-    cookies = cookies || []
+    cookies = cookies || [];
     
-    // Thanks to http://bettermotherfuckingwebsite.com for bulk of the styling
-    var theme = '<style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;';
+    // Thanks to http://bettermotherfuckingwebsite.com for bluk of the styling
+    var theme = '<style type="text/css">body{';
     
     if (cookies.theme === 'dark') {
         theme += 'color:white;background-color:black;';
     } else {
-    // Default
-    theme += 'color:#444;'
+    // Default theme
+        theme += 'color:#444;'
     }
-    theme += 'padding:0 10px}h1,h2,h3{line-height:1.2}</style>'
+    theme += 'line-height:1.6;'
+    theme += 'margin: 40px auto;'
+    theme += 'max-width:' + (cookies.maxWidth || '650px') + ';'
+    theme += 'font-size:' + (cookies.fontSize || '16px') + ';'
+    
+    theme += 'padding:0 10px}'
+    theme += 'h1,h2,h3{line-height:1.2}</style>'
     
     return theme;
 };
@@ -219,6 +234,30 @@ app.all("/*", function(req, res) {
     if (reqUrl === 'setThemeDark') {
         res.cookie('theme', 'dark');
         cookies.theme = 'dark';
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.write(parseLinks(makePreferencesPage()));
+        res.send();
+        return;
+    }
+    
+    if (reqUrl === 'setViewportNormal') {
+        res.cookie('maxWidth', '');
+        res.cookie('fontSize', '');
+        cookies.margin = '';
+        cookies.maxWidth = '';
+        cookies.fontSize = '';
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.write(parseLinks(makePreferencesPage()));
+        res.send();
+        return;
+    }
+    
+    if (reqUrl === 'setViewportMobile') {
+        res.cookie('maxWidth', '500px');
+        res.cookie('fontSize', '20px');
+        cookies.margin = '10px';
+        cookies.maxWidth = '500px';
+        cookies.fontSize = '20px';
         res.writeHead(200, {'Content-Type': 'text/html'});
         res.write(parseLinks(makePreferencesPage()));
         res.send();
