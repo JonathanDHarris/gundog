@@ -161,16 +161,16 @@ function makePreferencesPage() {
 }
 
 function getTheme() {
-    // Thanks to http://bettermotherfuckingwebsite.com for bluk of the styling
+    cookies = cookies || []
+    
+    // Thanks to http://bettermotherfuckingwebsite.com for bulk of the styling
     var theme = '<style type="text/css">body{margin:40px auto;max-width:650px;line-height:1.6;font-size:16px;';
     
-    if (cookies && cookies.theme) {
-        if (cookies.theme === 'dark') {
-            theme += 'color:white;background-color:black;';
-        }
+    if (cookies.theme === 'dark') {
+        theme += 'color:white;background-color:black;';
     } else {
-        // Default
-        theme += 'color:#444;'
+    // Default
+    theme += 'color:#444;'
     }
     theme += 'padding:0 10px}h1,h2,h3{line-height:1.2}</style>'
     
