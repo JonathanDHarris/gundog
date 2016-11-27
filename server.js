@@ -17,7 +17,7 @@ function makeResponseBody(body) {
 
     var responseBody = '';
 
-    responseBody += '<html><head><title>Gundog</title>' + getTheme() + '</head><body>';
+    responseBody += '<html><head><title>Gundog</title>' + getTheme() + addToggleList() + '</head><body>';
     
     responseBody += '<div style="text-align:center"><a id="gunDogHome" href="gun_dog_home">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
     
@@ -29,8 +29,7 @@ function makeResponseBody(body) {
     // But only print out things like lists if we think we're in the main body of the page
     preAmbleFinished = false;
     
-    for (var i = 0; i < number_elements; i++) {
-        
+    for (var i = 0; i < number_elements; i++) {        
         element = $(body).find(usable_elements).eq(i);
         
         if (preAmbleFinished === false) {
@@ -38,6 +37,11 @@ function makeResponseBody(body) {
         }
         
         if (preAmbleFinished || isPreAmble(element[0].name)) {
+            if (element[0].name === 'ul' || element[0].name === 'ol') {
+                element.attr('id','list_' + i);
+                responseBody += '<button id=button_' + i + ' onClick="toggleList(' + i + ')">Hide List</button>';
+                responseBody += '</br>';
+            };
             responseBody += element;
         }
     };
@@ -190,6 +194,24 @@ function getTheme() {
     theme += 'h1,h2,h3{line-height:1.2}</style>'
     
     return theme;
+};
+
+function addToggleList() {
+    var toggleListsScript = '';
+    toggleListsScript += '<script>';
+    toggleListsScript += 'toggleList = function(i) {'
+    toggleListsScript += '    var elementDisplay = document.getElementById(\'list_\' + i + \'\').style.display;';
+    toggleListsScript += '    if (elementDisplay === \'none\') {'
+    toggleListsScript += '        document.getElementById(\'button_\' + i + \'\').firstChild.data = \'Hide List\';';
+    toggleListsScript += '        document.getElementById(\'list_\' + i + \'\').style.display = \'block\';';
+    toggleListsScript += '    } else {'
+    toggleListsScript += '        document.getElementById(\'button_\' + i + \'\').firstChild.data = \'Show List\';';
+    toggleListsScript += '        document.getElementById(\'list_\' + i + \'\').style.display = \'none\';';
+    toggleListsScript += '    }';
+    toggleListsScript += '};';
+    toggleListsScript += '</script>';
+    
+    return toggleListsScript;
 };
 
 app.all("/*", function(req, res) {
