@@ -17,7 +17,10 @@ function makeResponseBody(body) {
 
     var responseBody = '';
 
-    responseBody += '<html><head><title>Gundog</title>' + getTheme() + addToggleList() + '</head><body>';
+    responseBody += '<html><head><title>Gundog</title>';
+    responseBody += getTheme();
+    responseBody += ' <script src="http://' + server_exeternal_address + '/scripts/toggleList.js"></script>'
+    responseBody += '</head><body>';
     
     responseBody += '<div style="text-align:center"><a id="gunDogHome" href="gun_dog_home">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
     
@@ -196,24 +199,6 @@ function getTheme() {
     return theme;
 };
 
-function addToggleList() {
-    var toggleListsScript = '';
-    toggleListsScript += '<script>';
-    toggleListsScript += 'toggleList = function(i) {'
-    toggleListsScript += '    var elementDisplay = document.getElementById(\'list_\' + i + \'\').style.display;';
-    toggleListsScript += '    if (elementDisplay === \'none\') {'
-    toggleListsScript += '        document.getElementById(\'button_\' + i + \'\').firstChild.data = \'Hide List\';';
-    toggleListsScript += '        document.getElementById(\'list_\' + i + \'\').style.display = \'block\';';
-    toggleListsScript += '    } else {'
-    toggleListsScript += '        document.getElementById(\'button_\' + i + \'\').firstChild.data = \'Show List\';';
-    toggleListsScript += '        document.getElementById(\'list_\' + i + \'\').style.display = \'none\';';
-    toggleListsScript += '    }';
-    toggleListsScript += '};';
-    toggleListsScript += '</script>';
-    
-    return toggleListsScript;
-};
-
 app.all("/*", function(req, res) {
     cookies = req.cookies;
     
@@ -290,6 +275,12 @@ app.all("/*", function(req, res) {
         res.writeHead(200, {'Content-Type': 'text/html'});
         res.write(parseLinks(makePreferencesPage()));
         res.send();
+        return;
+    }
+    
+    if (reqUrl.substring(0,8) === 'scripts/'){
+        reqUrl =  __dirname + '/' + reqUrl;
+        res.sendFile(reqUrl);
         return;
     }
     
