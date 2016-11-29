@@ -305,7 +305,7 @@ app.all("/*", function(req, res) {
             res.write(parseLinks(responseBody, reqUrl));
         } else {
             var responseBody = makeFailureResponseBody(reqUrl);
-            res.write(parseLinks(responseBody));
+            res.write(responseBody);
         }
         res.send();
     })
