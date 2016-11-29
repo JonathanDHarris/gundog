@@ -8,9 +8,9 @@ var config = require('./config.json');
 var cookieParser = require('cookie-parser')
 app.use(cookieParser());
 
-var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || config.hostAddress;
-var server_port = process.env.OPENSHIFT_NODEJS_PORT || config.hostPort;
-var server_exeternal_address = config.externalAddress;
+var SERVER_IP_ADDRESS = process.env.OPENSHIFT_NODEJS_IP || config.hostAddress;
+var SERVER_PORT = process.env.OPENSHIFT_NODEJS_PORT || config.hostPort;
+var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
 
 function makeResponseBody(body) {
     $ = cheerio.load(body);
@@ -19,12 +19,12 @@ function makeResponseBody(body) {
 
     responseBody += '<html><head><title>Gundog</title>';
     responseBody += getTheme();
-    responseBody += ' <script src="http://' + server_exeternal_address + '/scripts/toggleList.js"></script>'
+    responseBody += ' <script src="http://' + SERVER_EXTERNAL_ADDRESS + '/scripts/toggleList.js"></script>';
     responseBody += '</head><body>';
     
     responseBody += '<div style="text-align:center"><a id="gunDogHome" href="gun_dog_home">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
     
-    var usable_elements = 'p, h1, h2, h3, ul, ol'
+    var usable_elements = 'p, h1, h2, h3, ul, ol';
     
     var number_elements = $(body).find(usable_elements).length;
     
@@ -56,7 +56,7 @@ function makeResponseBody(body) {
 
 function isPreAmble(tagName) {
     // I've found that in practice most sites only use h1 for headers you actually want to see
-    return tagName === 'h1'
+    return tagName === 'h1';
 }
 
 function parseLinks(responseBody, reqUrl) {
@@ -88,16 +88,16 @@ function parseLinks(responseBody, reqUrl) {
       if (a.attr('href') && a.attr('href')[0]) {
         // Relative link
         if (a.attr('href')[0] === '/') {
-            a.attr('href','http://' + server_exeternal_address + '/' + domain + a.attr('href'));
+            a.attr('href','http://' + SERVER_EXTERNAL_ADDRESS + '/' + domain + a.attr('href'));
         } else if (a.attr('href')[0] === '#') {
             a.attr('href', a.attr('href'));
         } else {
-            a.attr('href', 'http://' + server_exeternal_address + '/' + a.attr('href'));
+            a.attr('href', 'http://' + SERVER_EXTERNAL_ADDRESS + '/' + a.attr('href'));
         }
       }
     });
     
-    $('#gunDogHome').attr('href', 'http://' + server_exeternal_address + '/');
+    $('#gunDogHome').attr('href', 'http://' + SERVER_EXTERNAL_ADDRESS + '/');
     $('#closeGunDog').attr('href', reqUrl);
     $('#preferences').attr('href', '/preferences');
     $('#setThemeLight').attr('href', '/setThemeLight');
@@ -179,7 +179,7 @@ function makePreferencesPage() {
 function getTheme() {
     cookies = cookies || [];
     
-    // Thanks to http://bettermotherfuckingwebsite.com for bluk of the styling
+    // Thanks to http://bettermotherfuckingwebsite.com for bulk of the styling
     var theme = '<style type="text/css">body{';
     
     if (cookies.theme === 'dark') {
@@ -311,7 +311,7 @@ app.all("/*", function(req, res) {
     })
 });
 
-console.log(server_ip_address, server_port);
-app.listen(server_port, server_ip_address, function () {
-  console.log( "Listening on " + server_ip_address + ", server_port " + server_port )
+console.log(SERVER_IP_ADDRESS, SERVER_PORT);
+app.listen(SERVER_PORT, SERVER_IP_ADDRESS, function () {
+  console.log( "Listening on " + SERVER_IP_ADDRESS + ", port " + SERVER_PORT );
 });
