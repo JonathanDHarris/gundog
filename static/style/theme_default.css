@@ -1,0 +1,16 @@
+body{
+    color: #444;
+    line-height: 1.6;
+    margin: 40px auto;
+    max-width: 650px;
+    font-size: 16px;
+    padding:0 10px;
+}
+
+h1 h2 h3 {
+    line-height:1.2;
+}
+
+a {
+    color: blue;
+}

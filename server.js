@@ -19,7 +19,7 @@ function makeResponseBody(body) {
 
     responseBody += '<html><head><title>Gundog</title>';
     responseBody += getTheme();
-    responseBody += ' <script src="http://' + SERVER_EXTERNAL_ADDRESS + '/scripts/toggleList.js"></script>';
+    responseBody += ' <script src="http://' + SERVER_EXTERNAL_ADDRESS + '/static/scripts/toggleList.js"></script>';
     responseBody += '</head><body>';
     
     responseBody += '<div style="text-align:center"><a id="gunDogHome" href="gun_dog_home">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
@@ -60,15 +60,6 @@ function isPreAmble(tagName) {
 }
 
 function parseLinks(responseBody, reqUrl) {
-    var linkColour = 'blue';
-    
-    // Must be set here because you can't do inline stlyes on psuedo-selectors
-    if (cookies && cookies.theme) {
-        if (cookies.theme === 'dark') {
-            linkColour = 'yellow';
-        }
-    }
-    
     var domain;
     var reqHref;
 
@@ -82,8 +73,6 @@ function parseLinks(responseBody, reqUrl) {
     
     $('a').each(function(index, value) {
       var a = $(this);
-      
-      a.css('color', linkColour);
       
       if (a.attr('href') && a.attr('href')[0]) {
         // Relative link
@@ -176,28 +165,17 @@ function makePreferencesPage() {
     return response;
 }
 
+
 function getTheme() {
+    // Thanks to http://bettermotherfuckingwebsite.com for bulk of the styling
     cookies = cookies || [];
     
-    // Thanks to http://bettermotherfuckingwebsite.com for bulk of the styling
-    var theme = '<style type="text/css">body{';
-    
     if (cookies.theme === 'dark') {
-        theme += 'color:white;background-color:black;';
+        return '<link rel="stylesheet" type="text/css" href="static/style/theme_dark.css">';
     } else {
-    // Default theme
-        theme += 'color:#444;'
+        return '<link rel="stylesheet" type="text/css" href="static/style/theme_default.css">';
     }
-    theme += 'line-height:1.6;'
-    theme += 'margin: 40px auto;'
-    theme += 'max-width:' + (cookies.maxWidth || '650px') + ';'
-    theme += 'font-size:' + (cookies.fontSize || '16px') + ';'
-    
-    theme += 'padding:0 10px}'
-    theme += 'h1,h2,h3{line-height:1.2}</style>'
-    
-    return theme;
-};
+}
 
 app.all("/*", function(req, res) {
     cookies = req.cookies;
@@ -278,7 +256,7 @@ app.all("/*", function(req, res) {
         return;
     }
     
-    if (reqUrl.substring(0,8) === 'scripts/'){
+    if (reqUrl.substring(0,7) === 'static/'){
         reqUrl =  __dirname + '/' + reqUrl;
         res.sendFile(reqUrl);
         return;
