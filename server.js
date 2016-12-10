@@ -172,7 +172,10 @@ function getTheme() {
 }
 
 function getResponsiveSizing() {
-    return '<link rel="stylesheet" type="text/css" href="static/style/responsive_sizing.css">';
+    returnString = '<link rel="stylesheet" type="text/css" href="static/style/responsive_sizing.css">';
+    returnString += '<meta name="viewport" content="width=device-width, initial-scale=1">';
+    
+    return returnString;
 }
 
 app.all("/*", function(req, res) {
