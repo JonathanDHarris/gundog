@@ -78,11 +78,11 @@ function parseLinks(responseBody, reqUrl) {
       if (a.attr('href') && a.attr('href')[0]) {
         // Relative link
         if (a.attr('href')[0] === '/') {
-            a.attr('href','http://' + SERVER_EXTERNAL_ADDRESS + '/' + domain + a.attr('href'));
+            a.attr('href','http://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + domain + a.attr('href'));
         } else if (a.attr('href')[0] === '#') {
             a.attr('href', a.attr('href'));
         } else {
-            a.attr('href', 'http://' + SERVER_EXTERNAL_ADDRESS + '/' + a.attr('href'));
+            a.attr('href', 'http://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + a.attr('href'));
         }
       }
     });
