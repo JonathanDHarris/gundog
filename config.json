@@ -1,5 +1,5 @@
 {
     "hostAddress": "localhost",
     "hostPort": "3000",
-    "externalAddress": "gundog-smalluniverse.rhcloud.com/"
+    "externalAddress": "gundog-smalluniverse.rhcloud.com"
 }
