@@ -11,6 +11,7 @@ app.use(cookieParser());
 var SERVER_IP_ADDRESS = process.env.OPENSHIFT_NODEJS_IP || config.hostAddress;
 var SERVER_PORT = process.env.OPENSHIFT_NODEJS_PORT || config.hostPort;
 var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
+var PROTOCOL = config.protocol;
 
 function makeResponseBody(body) {
     $ = cheerio.load(body);
@@ -20,8 +21,8 @@ function makeResponseBody(body) {
     responseBody += '<html><head><title>Gundog</title>';
     responseBody += getTheme();
     responseBody += getResponsiveSizing();
-    responseBody += ' <script src="http://' + SERVER_EXTERNAL_ADDRESS + '/static/scripts/toggleList.js"></script>';
-    responseBody += '</head><body>';
+    responseBody += ' <script src="' + PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/static/scripts/toggleList.js"></script>';
+    responseBody += '</head><body><div id="gundog-div">';
     
     responseBody += '<div style="text-align:center"><a id="gunDogHome" href="gun_dog_home">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
     
@@ -50,7 +51,7 @@ function makeResponseBody(body) {
         }
     };
     
-    responseBody += '</body></html>';
+    responseBody += '</div></body></html>';
     
     return responseBody;
 }
@@ -61,13 +62,17 @@ function isPreAmble(tagName) {
 }
 
 function parseLinks(responseBody, reqUrl) {
-    var domain;
-    var reqHref;
+    var hostname;
+    var fullPath;  // Path to the resource, example.com/directory/file.html
+    var parentPath;  // Path to the resource parent directory, example.com/directory
 
     if (reqUrl) {
-        var parsed_url = new url.parse(reqUrl);
-        domain =  parsed_url.hostname; 
-        reqHref  = parsed_url.href;
+        var parsedUrl = new url.parse(reqUrl);
+        hostname = parsedUrl.hostname;
+        fullPath  = parsedUrl.href;
+        parentPath = fullPath.split('/');
+        parentPath.pop();
+        parentPath = parentPath.join('/');
     }
     
     $ = cheerio.load(responseBody);
@@ -76,18 +81,23 @@ function parseLinks(responseBody, reqUrl) {
       var a = $(this);
       
       if (a.attr('href') && a.attr('href')[0]) {
-        // Relative link
-        if (a.attr('href')[0] === '/') {
-            a.attr('href','http://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + domain + a.attr('href'));
-        } else if (a.attr('href')[0] === '#') {
-            a.attr('href', a.attr('href'));
-        } else {
-            a.attr('href', 'http://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + a.attr('href'));
+        var href = a.attr('href');
+        // Absolute link
+        if (href.substring(0, 4) === 'http') {
+            a.attr('href', PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + href);
+        } else if (href[0] === '#') {
+            a.attr('href', href);
         }
+        // Relative link
+        else if (href[0] === '/') {
+            a.attr('href',PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=http://' + hostname + href);
+        } else {
+            a.attr('href',PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + parentPath + '/' + href);
+        } 
       }
     });
     
-    $('#gunDogHome').attr('href', 'http://' + SERVER_EXTERNAL_ADDRESS + '/');
+    $('#gunDogHome').attr('href', PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/');
     $('#closeGunDog').attr('href', reqUrl);
     $('#preferences').attr('href', '/preferences');
     $('#setThemeLight').attr('href', '/setThemeLight');
@@ -112,9 +122,11 @@ function makeFailureResponseBody(reqUrl) {
     
     response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body>';
     
+    response += '<div id="problem-div">';
     response += '<p>Gundog experienced a problem.</p>';
     response += '<p>You can try the requested url yourself:</p>';
     response += '<a href="' + reqUrl + '">' + reqUrl + '</a>';
+    response += '</div>';
     
     response += '</body></html>';
     
@@ -124,7 +136,7 @@ function makeFailureResponseBody(reqUrl) {
 function makeIndexPage() {
     var response = '';
     
-    response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body></br></br></br><div style="margin:0 auto" align=center> <h3>Gundog</h3><form action="/" method="GET"><input type="text" name="gundog_url" value="" style="width: 95%;" autofocus /><br /></form></div></br></br></br><p>Give gundog a website address and it will return a stripped down version of the site.</p><p>Gundog was created for use with sites containing a lot of banners and scripts that made browsing tedious and for mobile browsing.</p><p>It will work well with pages containing a lot of text such as articles but not so well on other pages such as news front pages.</p></br></br></br><div style="text-align:center"><a id="preferences" href="">Preferences</a></div></body></html>'
+    response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body></br></br></br><div style="margin:0 auto" align=center> <h3>Gundog</h3><form action="/" method="GET"><input type="text" name="gundog_url" id="gundog-bar" value="" style="width: 95%;" autofocus /><br /></form></div></br></br></br><p>Give gundog a website address and it will return a stripped down version of the site.</p><p>Gundog was created for use with sites containing a lot of banners and scripts that made browsing tedious and for mobile browsing.</p><p>It will work well with pages containing a lot of text such as articles but not so well on other pages such as news front pages.</p></br></br></br><div style="text-align:center"><a id="preferences" href="">Preferences</a></div></body></html>'
     
     return response;
 };
