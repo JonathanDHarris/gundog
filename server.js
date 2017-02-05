@@ -42,26 +42,11 @@ function makeResponseBody(body) {
         }
         
         if (preAmbleFinished || isPreAmble(element[0].name)) {
-            if (element[0].name === 'ul' || element[0].name === 'ol') {
-                var label;
-                if (element.attr('aria-label')) {
-                    label = element.attr('aria-label');
-                } else if (element.attr('id')) {
-                    label = element.attr('id');
-                } else if (element.attr('class')) {
-                    label = element.attr('class');
-                } else {
-                    label = 'List';
-                }
-                element.attr('id','list_' + i);
-                element.attr('style', 'display:none');
-                responseBody += '<button id=button_' + i + ' onClick="toggleList(' + i + ')">Show ' + label + '</button>';
-                responseBody += '</br>';
-            };
-            if (element.attr('aria-hidden')) {
-                element.attr('style', 'display:none');
-            }
-            responseBody += element;
+            var elementsToAdd = parseElement(element, i);
+            
+            elementsToAdd.forEach(function(el) {
+                responseBody += el;
+            });
         }
     };
     
@@ -73,6 +58,55 @@ function makeResponseBody(body) {
 function isPreAmble(tagName) {
     // I've found that in practice most sites only use h1 for headers you actually want to see
     return tagName === 'h1';
+};
+
+function parseElement(element, i) {
+    var elementsToAdd;
+            
+    if (element[0].name === 'ul' || element[0].name === 'ol') {
+        elementsToAdd = parseList(element, i);
+    } else if (element.attr('aria-hidden')) {
+        elementsToAdd = parseAriaHidden(element);
+    } else {
+        elementsToAdd = [element];
+    };
+    
+    return elementsToAdd;
+};
+
+function parseList(element, i) {
+    var elementsToAdd = [];
+    var label;
+    if (element.attr('aria-label')) {
+        label = element.attr('aria-label');
+    } else if (element.attr('id')) {
+        label = element.attr('id');
+    } else if (element.attr('class')) {
+        label = element.attr('class');
+    } else {
+        label = 'List';
+    }
+    var buttonId = 'button_' + i;
+    var buttonData = 'Show ' + label;
+    var button = $('<button>Show '+ label + '</button>')
+        .attr('id', buttonId)
+        .attr('value', buttonData)
+        .attr('onclick', 'toggleList(' + i + ')');
+
+    element.attr('id','list_' + i);
+    element.attr('style', 'display:none');
+        
+    elementsToAdd.push(button);
+    elementsToAdd.push($('</br>'));
+    elementsToAdd.push(element);
+    
+    return elementsToAdd;
+};
+
+function parseAriaHidden(element) {
+    element.attr('style', 'display:none');
+    
+    return [element];
 };
 
 function parseLinks(responseBody, reqUrl) {
