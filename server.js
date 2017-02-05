@@ -43,10 +43,24 @@ function makeResponseBody(body) {
         
         if (preAmbleFinished || isPreAmble(element[0].name)) {
             if (element[0].name === 'ul' || element[0].name === 'ol') {
+                var label;
+                if (element.attr('aria-label')) {
+                    label = element.attr('aria-label');
+                } else if (element.attr('id')) {
+                    label = element.attr('id');
+                } else if (element.attr('class')) {
+                    label = element.attr('class');
+                } else {
+                    label = 'List';
+                }
                 element.attr('id','list_' + i);
-                responseBody += '<button id=button_' + i + ' onClick="toggleList(' + i + ')">Hide List</button>';
+                element.attr('style', 'display:none');
+                responseBody += '<button id=button_' + i + ' onClick="toggleList(' + i + ')">Show ' + label + '</button>';
                 responseBody += '</br>';
             };
+            if (element.attr('aria-hidden')) {
+                element.attr('style', 'display:none');
+            }
             responseBody += element;
         }
     };
@@ -54,12 +68,12 @@ function makeResponseBody(body) {
     responseBody += '</div></body></html>';
     
     return responseBody;
-}
+};
 
 function isPreAmble(tagName) {
     // I've found that in practice most sites only use h1 for headers you actually want to see
     return tagName === 'h1';
-}
+};
 
 function parseLinks(responseBody, reqUrl) {
     var hostname;
