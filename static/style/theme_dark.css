@@ -22,3 +22,8 @@ h2, h3 {
 a {
     color: yellow;
 }
+
+#togglePreAmbleButton {
+  margin: auto;
+  display: block;
+}
