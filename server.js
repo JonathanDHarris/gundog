@@ -22,6 +22,7 @@ function makeResponseBody(body) {
     responseBody += getTheme();
     responseBody += getResponsiveSizing();
     responseBody += ' <script src="' + PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/static/scripts/toggleList.js"></script>';
+    responseBody += ' <script src="' + PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/static/scripts/togglePreAmble.js"></script>';
     responseBody += '</head><body><div id="gundog-div">';
     
     responseBody += '<div style="text-align:center"><a id="gunDogHome" href="gun_dog_home">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
@@ -32,32 +33,59 @@ function makeResponseBody(body) {
     
     // Print out elements like headers that might be useful
     // But only print out things like lists if we think we're in the main body of the page
-    preAmbleFinished = false;
+    isPreAmble = true;
+    preAmbleEmpty = true;
+    preAmble = '';
+    mainContent = '';
     
     for (var i = 0; i < number_elements; i++) {        
         element = $(body).find(usable_elements).eq(i);
         
-        if (preAmbleFinished === false) {
-            preAmbleFinished = element[0].name === 'p'
+        if (isPreAmble) {
+            isPreAmble = elementIsPreAmble(element[0])
         }
         
-        if (preAmbleFinished || isPreAmble(element[0].name)) {
+        if (isPreAmble) {
+            preAmbleEmpty = false;
             var elementsToAdd = parseElement(element, i);
             
             elementsToAdd.forEach(function(el) {
-                responseBody += el;
+                preAmble += el;
+            });
+        }
+        
+        if (!isPreAmble) {
+            var elementsToAdd = parseElement(element, i);
+            
+            elementsToAdd.forEach(function(el) {
+                mainContent += el;
             });
         }
     };
     
+    if (!preAmbleEmpty) {
+        var togglePreAmbleButton = $('<button>Show site navigation</button>')
+            .attr('id', 'togglePreAmbleButton')
+            .attr('onclick', 'togglePreAmble()');
+        responseBody += togglePreAmbleButton
+        responseBody += '<div id="gunDogPreAmble" style="display:none">';
+        responseBody += preAmble;
+        responseBody += '</div>';
+    }
+    responseBody += mainContent;
     responseBody += '</div></body></html>';
     
     return responseBody;
 };
 
-function isPreAmble(tagName) {
+function elementIsPreAmble(element) {
     // I've found that in practice most sites only use h1 for headers you actually want to see
-    return tagName === 'h1';
+    if (element.name === 'h1'
+        || (element.name === 'p' && element.children[0] && element.children[0].type === 'text' && element.children[0].data.length > 3)) {
+        return false;
+    } else {
+        return true;
+    }
 };
 
 function parseElement(element, i) {
@@ -90,7 +118,6 @@ function parseList(element, i) {
     var buttonData = 'Show ' + label;
     var button = $('<button>Show '+ label + '</button>')
         .attr('id', buttonId)
-        .attr('value', buttonData)
         .attr('onclick', 'toggleList(' + i + ')');
 
     element.attr('id','list_' + i);
