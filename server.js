@@ -40,6 +40,8 @@ function makeResponseBody(body) {
     
     for (var i = 0; i < number_elements; i++) {        
         element = $(body).find(usable_elements).eq(i);
+		// Don't want the attributes we're given, e.g. classes, ids, stylings.  So remove them.
+		element[0].attribs = {};
         
         if (isPreAmble) {
             isPreAmble = elementIsPreAmble(element[0])
