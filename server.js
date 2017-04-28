@@ -103,28 +103,19 @@ function parseElement(element, i) {
 };
 
 function parseList(element, i) {
-    var elementsToAdd = [];
-    var label;
-    if (element.attr('aria-label')) {
-        label = element.attr('aria-label');
-    } else if (element.attr('id')) {
-        label = element.attr('id');
-    } else if (element.attr('class')) {
-        label = element.attr('class');
-    } else {
-        label = 'List';
-    }
-    var buttonId = 'button_' + i;
-    var buttonData = 'Show ' + label;
-    var button = $('<button>Show '+ label + '</button>')
-        .attr('id', buttonId)
-        .attr('onclick', 'toggleList(' + i + ')');
+	var fistListItem = element.find('li').text().trim().split('\n')[0].substring(0, 15);
+	var elementsToAdd = [];
 
     element.attr('id','list_' + i);
+	// TODO: add a toggle-list class to indent the list
+	element.attr('class', 'toggle-list');
     element.attr('style', 'display:none');
+	
+	var moreButton = $('<a> (show more...)</a>')
+		.attr('id', 'button_' + i)
+        .attr('onclick', 'toggleList(' + i + ')');
         
-    elementsToAdd.push(button);
-    elementsToAdd.push($('</br>'));
+    elementsToAdd.push($('<ul><li>' + fistListItem + moreButton + '</li></ul>'));
     elementsToAdd.push(element);
     
     return elementsToAdd;
