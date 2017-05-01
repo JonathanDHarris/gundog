@@ -36,7 +36,8 @@ function makeResponseBody(body) {
     isPreAmble = true;
     preAmbleEmpty = true;
     preAmble = '';
-    mainContent = '';
+    hashedContent = [];
+    mainContent = [];
     
     for (var i = 0; i < number_elements; i++) {        
         element = $(body).find(usable_elements).eq(i);
@@ -58,10 +59,22 @@ function makeResponseBody(body) {
             var elementsToAdd = parseElement(element, i);
             
             elementsToAdd.forEach(function(el) {
-                mainContent += el;
-            });
+                var hashedEl = hashFnv32a(el.toString());
+                
+                /* Don't add identical duplicates of an element.
+                   Could be a problem in some areas, but prevents
+                   repeating elements if there's a duplicate in the DOM
+                   e.g. if there is a mobile version of the content
+                   that the site expects to be hidden via javascript. */
+                if (hashedContent.indexOf(hashedEl) < 0) {
+                        hashedContent.push(hashedEl);
+                        mainContent.push(el.toString());
+                    };
+                    
+                });
         }
     };
+    
     
     if (!preAmbleEmpty) {
         var togglePreAmbleButton = $('<button>Show site navigation</button>')
@@ -72,11 +85,40 @@ function makeResponseBody(body) {
         responseBody += preAmble;
         responseBody += '</div>';
     }
-    responseBody += mainContent;
+    mainContent.forEach(function(el) {
+        responseBody += el;
+    });
     responseBody += '</div></body></html>';
     
     return responseBody;
 };
+
+/**
+ * Calculate a 32 bit FNV-1a hash
+ * Found here: https://gist.github.com/vaiorabbit/5657561
+ * Ref.: http://isthe.com/chongo/tech/comp/fnv/
+ *
+ * @param {string} str the input value
+ * @param {boolean} [asString=false] set to true to return the hash value as 
+ *     8-digit hex string instead of an integer
+ * @param {integer} [seed] optionally pass the hash of the previous chunk
+ * @returns {integer | string}
+ */
+function hashFnv32a(str, asString, seed) {
+    /*jshint bitwise:false */
+    var i, l,
+        hval = (seed === undefined) ? 0x811c9dc5 : seed;
+
+    for (i = 0, l = str.length; i < l; i++) {
+        hval ^= str.charCodeAt(i);
+        hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
+    }
+    if( asString ){
+        // Convert to 8 digit hex string
+        return ("0000000" + (hval >>> 0).toString(16)).substr(-8);
+    }
+    return hval >>> 0;
+}
 
 function elementIsPreAmble(element) {
     // I've found that in practice most sites only use h1 for headers you actually want to see
