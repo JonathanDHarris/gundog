@@ -42,8 +42,15 @@ function makeResponseBody(body) {
     
     for (var i = 0; i < number_elements; i++) {        
         element = $(body).find(usable_elements).eq(i);
-        // Don't want the attributes we're given, e.g. classes, ids, stylings.  So remove them.
-        element[0].attribs = {};
+        /* Don't want the attributes we're given, e.g. classes, stylings.  So remove them.
+         * Keep ids since they are needed for tests to pass and for internal links. */
+        if (element[0].attribs.id) {
+            element[0].attribs = {
+                id: element[0].attribs.id
+            };
+        } else {
+            element[0].attribs = {};
+        }
         
         if (isPreAmble) {
             isPreAmble = elementIsPreAmble(element[0])
@@ -65,10 +72,10 @@ function makeResponseBody(body) {
                 var hashedEl = hashFnv32a(el.toString());
                 
                 /* Don't add identical duplicates of an element.
-                   Could be a problem in some areas, but prevents
-                   repeating elements if there's a duplicate in the DOM
-                   e.g. if there is a mobile version of the content
-                   that the site expects to be hidden via javascript. */
+                 * Could be a problem in some areas, but prevents
+                 * repeating elements if there's a duplicate in the DOM
+                 * e.g. if there is a mobile version of the content
+                 * that the site expects to be hidden via javascript. */
                 if (hashedContent.indexOf(hashedEl) < 0) {
                         hashedContent.push(hashedEl);
                         mainContent.push(el.toString());
