@@ -1,0 +1,6 @@
+{
+    "hostAddress": "localhost",
+    "hostPort": "3000",
+    "externalAddress": "localhost:3000",
+    "protocol": "http"
+}

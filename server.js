@@ -4,15 +4,23 @@ var request = require('request');
 var http = require('http');
 var cheerio = require('cheerio');
 var url = require('url');
-var config = require('./config.json');
 var hashFnv32a = require('./scripts/hashFnv32a.js');
 var cookieParser = require('cookie-parser')
 app.use(cookieParser());
 
-var SERVER_IP_ADDRESS = process.env.OPENSHIFT_NODEJS_IP || config.hostAddress;
-var SERVER_PORT = process.env.OPENSHIFT_NODEJS_PORT || config.hostPort;
-var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
-var PROTOCOL = config.protocol;
+if (process.env.OPENSHIFT_NODEJS_IP) {
+    var config = require('./config.gundog.json');
+    var SERVER_IP_ADDRESS = process.env.OPENSHIFT_NODEJS_IP;
+    var SERVER_PORT = process.env.OPENSHIFT_NODEJS_PORT;
+    var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
+    var PROTOCOL = config.protocol;
+} else {
+    var config = require('./config.local.json');
+    var SERVER_IP_ADDRESS = config.hostAddress;
+    var SERVER_PORT = config.hostPort;
+    var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
+    var PROTOCOL = config.protocol;
+}
 
 function makeResponseBody(body) {
     $ = cheerio.load(body);
