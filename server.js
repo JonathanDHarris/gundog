@@ -9,13 +9,13 @@ var cookieParser = require('cookie-parser')
 app.use(cookieParser());
 
 if (process.env.OPENSHIFT_NODEJS_IP) {
-    var config = require('./config.gundog.json');
+    var config = require('./config.openshift.json');
     var SERVER_IP_ADDRESS = process.env.OPENSHIFT_NODEJS_IP;
     var SERVER_PORT = process.env.OPENSHIFT_NODEJS_PORT;
     var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
     var PROTOCOL = config.protocol;
 } else {
-    var config = require('./config.local.json');
+    var config = require('./config.' + process.env.NODE_ENV + '.json');
     var SERVER_IP_ADDRESS = config.hostAddress;
     var SERVER_PORT = config.hostPort;
     var SERVER_EXTERNAL_ADDRESS = config.externalAddress;

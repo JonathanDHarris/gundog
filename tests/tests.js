@@ -1,8 +1,7 @@
 import { Selector } from 'testcafe';
 
-var config = require('../config.json');
-var SERVER_IP_ADDRESS = process.env.OPENSHIFT_NODEJS_IP || config.hostAddress;
-var SERVER_PORT = process.env.OPENSHIFT_NODEJS_PORT || config.hostPort;
+var config;
+config = require('../config.' + process.env.NODE_ENV + '.json');
 var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
 
 fixture `Home page`
