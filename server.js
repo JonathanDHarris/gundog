@@ -8,19 +8,18 @@ var hashFnv32a = require('./scripts/hashFnv32a.js');
 var cookieParser = require('cookie-parser')
 app.use(cookieParser());
 
-if (process.env.OPENSHIFT_NODEJS_IP) {
-    var config = require('./config.openshift.json');
-    var SERVER_IP_ADDRESS = process.env.OPENSHIFT_NODEJS_IP;
-    var SERVER_PORT = process.env.OPENSHIFT_NODEJS_PORT;
+if (process.env.NODE && ~process.env.NODE.indexOf("heroku")) {
+    var config = require('./config.heroku.json');
+    var SERVER_PORT = process.env.PORT || 5000;
     var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
     var PROTOCOL = config.protocol;
 } else {
-    var config = require('./config.' + process.env.NODE_ENV + '.json');
-    var SERVER_IP_ADDRESS = config.hostAddress;
+    var config = require('./config.local.json');
     var SERVER_PORT = config.hostPort;
     var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
     var PROTOCOL = config.protocol;
 }
+app.set('port', SERVER_PORT);
 
 function makeResponseBody(body) {
     $ = cheerio.load(body);
@@ -376,7 +375,6 @@ app.all("/*", function(req, res) {
     })
 });
 
-console.log(SERVER_IP_ADDRESS, SERVER_PORT);
-app.listen(SERVER_PORT, SERVER_IP_ADDRESS, function () {
-  console.log( "Listening on " + SERVER_IP_ADDRESS + ", port " + SERVER_PORT );
+app.listen(app.get('port'), function() {
+  console.log('Node app is running on port', app.get('port'));
 });

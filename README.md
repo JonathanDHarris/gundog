@@ -12,4 +12,4 @@ Here is an example of a webpage without gundog
 ...and here is the same page with gundog
 ![alt text](https://github.com/JonathanDHarris/gundog/blob/master/documentation_images/with_example.png "The same website with gundog")
 
-You can host your own gundog server locally, or use http://gundog-smalluniverse.rhcloud.com
+You can host your own gundog server locally, or use https://gundog.herokuapp.com

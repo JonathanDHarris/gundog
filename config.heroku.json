@@ -1,0 +1,5 @@
+{
+    "hostPort": "5000",
+    "externalAddress": "gundog.herokuapp.com",
+    "protocol": "https"
+}
