@@ -13,3 +13,9 @@ Here is an example of a webpage without gundog
 ![alt text](https://github.com/JonathanDHarris/gundog/blob/master/documentation_images/with_example.png "The same website with gundog")
 
 You can host your own gundog server locally, or use https://gundog.herokuapp.com
+
+** Testing **
+Tests are run using [TestCafe](https://devexpress.github.io/testcafe/documentation/getting-started/)
+ * Install TestCafe if required `npm install -g testcafe`
+ * Check the test website is responding `testcafe chrome tests/pretests.js`
+ * Run the tests `testcafe chrome tests/tests.js`
