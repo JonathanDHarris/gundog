@@ -68,7 +68,7 @@ const makeResponseBody = (res, body, reqUrl) => {
             preAmbleEmpty = false;
             let elementsToAdd = parseElement(element, i, reqUrl);
             
-            elementsToAdd.forEach(function(el) {
+            elementsToAdd.forEach(el => {
                 preAmble.push(el.toString());
             });
         }
@@ -76,7 +76,7 @@ const makeResponseBody = (res, body, reqUrl) => {
         if (!isPreAmble) {
             let elementsToAdd = parseElement(element, i, reqUrl);
             
-            elementsToAdd.forEach(function(el) {
+            elementsToAdd.forEach(el => {
                 const hashedEl = hashFnv32a(el.toString());
                 
                 /* Don't add identical duplicates of an element.
@@ -205,7 +205,6 @@ const makeIndexPage = res => {
 };
 
 const makePreferencesPage = res => {
-
 	const templateData = {
 		theme: getTheme(),
 		sizing: getResponsiveSizing(),
@@ -234,7 +233,7 @@ const getResponsiveSizing = () => {
     return returnString;
 }
 
-app.all("/*", function(req, res) {
+app.all("/*", (req, res) => {
     cookies = req.cookies;
     
     let reqUrl = req.url.substring(1);
@@ -293,7 +292,7 @@ app.all("/*", function(req, res) {
     
     const decodedReqUrl = decodeURIComponent(reqUrl);
 
-    request(decodedReqUrl, function (error, response, body) {
+    request(decodedReqUrl, (error, response, body) => {
         if (!error && response.statusCode == 200) {
             makeResponseBody(res, body, reqUrl);
         } else {
@@ -302,6 +301,6 @@ app.all("/*", function(req, res) {
     })
 });
 
-app.listen(app.get('port'), function() {
+app.listen(app.get('port'), () => {
   console.log('Node app is running on port', app.get('port'));
 });
