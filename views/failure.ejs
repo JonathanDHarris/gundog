@@ -1,0 +1,12 @@
+<html lang="en">
+	<%- include('head', {theme, sizing} ) %>
+	<body>
+		<div id="problem-div">
+			<p>Gundog experienced a problem.</p>
+			<p>You can try the requested url yourself:</p>
+			<p>
+				<a href="<%- reqUrl %>"><%= reqUrl %></a>
+			</p>
+		</div>
+	</body>
+</html>

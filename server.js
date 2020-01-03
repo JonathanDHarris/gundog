@@ -6,7 +6,9 @@ const cheerio = require('cheerio');
 const url = require('url');
 const hashFnv32a = require('./scripts/hashFnv32a.js');
 const cookieParser = require('cookie-parser');
+
 app.use(cookieParser());
+app.set('view engine', 'ejs');
 
 let config;
 let SERVER_PORT;
@@ -24,34 +26,30 @@ app.set('port', SERVER_PORT);
 
 let cookies;
 
-const makeResponseBody = body => {
+const makeResponseBody = (res, body, reqUrl) => {
     $ = cheerio.load(body);
 
     let responseBody = '';
-
-    responseBody += '<html><head><title>Gundog</title>';
-    responseBody += getTheme();
-    responseBody += getResponsiveSizing();
-    responseBody += ' <script src="' + PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/static/scripts/toggleList.js"></script>';
-    responseBody += ' <script src="' + PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/static/scripts/togglePreAmble.js"></script>';
-    responseBody += '</head><body><div id="gundog-div">';
     
-    responseBody += '<div style="text-align:center"><a id="gunDogHome" href="gun_dog_home">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
+    const usableElements = 'p, h1, h2, h3, ul, ol, figure, img';
     
-    const usable_elements = 'p, h1, h2, h3, ul, ol';
-    
-    const number_elements = $(body).find(usable_elements).length;
+    const numberElements = $(body).find(usableElements).length;
     
     // Print out elements like headers that might be useful
     // But only print out things like lists if we think we're in the main body of the page
     isPreAmble = true;
     preAmbleEmpty = true;
-    preAmble = '';
+    preAmble = [];
     hashedContent = [];
     mainContent = [];
     
-    for (let i = 0; i < number_elements; i++) {        
-        element = $(body).find(usable_elements).eq(i);
+    for (let i = 0; i < numberElements; i++) {        
+        element = $(body).find(usableElements).eq(i);
+
+		if (cookies.hideImages === 'true') {
+		 element.find('img').remove();
+		}
+		
         /* Don't want the attributes we're given, e.g. classes, stylings.  So remove them.
          * Keep ids since they are needed for tests to pass and for internal links. */
         if (element[0].attribs.id) {
@@ -68,15 +66,15 @@ const makeResponseBody = body => {
         
         if (isPreAmble) {
             preAmbleEmpty = false;
-            let elementsToAdd = parseElement(element, i);
+            let elementsToAdd = parseElement(element, i, reqUrl);
             
             elementsToAdd.forEach(function(el) {
-                preAmble += el;
+                preAmble.push(el.toString());
             });
         }
         
         if (!isPreAmble) {
-            let elementsToAdd = parseElement(element, i);
+            let elementsToAdd = parseElement(element, i, reqUrl);
             
             elementsToAdd.forEach(function(el) {
                 const hashedEl = hashFnv32a(el.toString());
@@ -95,21 +93,18 @@ const makeResponseBody = body => {
         }
     };
 
-    if (!preAmbleEmpty) {
-        const togglePreAmbleButton = $('<button>Show site navigation</button>')
-            .attr('id', 'togglePreAmbleButton')
-            .attr('onclick', 'togglePreAmble()');
-        responseBody += togglePreAmbleButton
-        responseBody += '<div id="gunDogPreAmble" style="display:none">';
-        responseBody += preAmble;
-        responseBody += '</div>';
-    }
-    mainContent.forEach(function(el) {
-        responseBody += el;
-    });
-    responseBody += '</div></body></html>';
-    
-    return responseBody;
+	const templateData = {
+		theme: getTheme(),
+		sizing: getResponsiveSizing(),
+		protocol: PROTOCOL,
+		severExternalAddress: SERVER_EXTERNAL_ADDRESS,
+		reqUrl,
+		preAmbleEmpty,
+		preAmble,
+		content: mainContent
+	};
+	
+	res.render('gundog', templateData);
 };
 
 const elementIsPreAmble = element => {
@@ -122,7 +117,7 @@ const elementIsPreAmble = element => {
     }
 };
 
-const parseElement = (element, i) => {
+const parseElement = (element, i, reqUrl) => {
     let elementsToAdd;
             
     if (element[0].name === 'ul' || element[0].name === 'ol') {
@@ -130,7 +125,7 @@ const parseElement = (element, i) => {
     } else if (element.attr('aria-hidden')) {
         elementsToAdd = parseAriaHidden(element);
     } else {
-        elementsToAdd = [element];
+        elementsToAdd = parseLinks(element, reqUrl);
     };
     
     return elementsToAdd;
@@ -159,115 +154,65 @@ const parseAriaHidden = element => {
     
     return [element];
 };
-
-const parseLinks = (responseBody, reqUrl) => {
-    let hostname;
-    let fullPath;  // Path to the resource, example.com/directory/file.html
-    let parentPath;  // Path to the resource parent directory, example.com/directory
-
-    if (reqUrl) {
-        const parsedUrl = new url.parse(reqUrl);
-        hostname = parsedUrl.hostname;
-        fullPath  = parsedUrl.href;
-        parentPath = fullPath.split('/');
+	
+const parseLinks = (element, reqUrl) => {    
+    element.find('a').toArray().forEach(a => {
+	  const href = a.attribs['href']
+	  	  
+      if (href && href[0]) {
+	    const parsedUrl = new url.parse(reqUrl);
+        const hostname = parsedUrl.hostname;
+        const fullPath  = parsedUrl.href;
+        let parentPath = fullPath.split('/');
         parentPath.pop();
         parentPath = parentPath.join('/');
-    }
-    
-    $ = cheerio.load(responseBody);
-    
-    $('a').each(function(index, value) {
-      const a = $(this);
-      
-      if (a.attr('href') && a.attr('href')[0]) {
-        const href = a.attr('href');
+		
         // Absolute link
         if (href.substring(0, 4) === 'http') {
-            a.attr('href', PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + href);
+			a.attribs['href'] = PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + href;
         } else if (href[0] === '#') {
-            a.attr('href', href);
+            // pass
         }
         // Relative link
         else if (href[0] === '/') {
-            a.attr('href',PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=http://' + hostname + href);
+            a.attribs['href'] = PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=http://' + hostname + href;
         } else {
-            a.attr('href',PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + parentPath + '/' + href);
+            a.attribs['href'] = PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + parentPath + '/' + href;
         } 
       }
     });
-    
-    $('#gunDogHome').attr('href', PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/');
-    $('#closeGunDog').attr('href', reqUrl);
-    $('#preferences').attr('href', '/preferences');
-    $('#setThemeLight').attr('href', '/setThemeLight');
-    $('#setThemeDark').attr('href', '/setThemeDark');
-    $('#setShowImages').attr('href', '/setShowImages');
-    $('#setHideImages').attr('href', '/setHideImages');
-    $('#setViewportNormal').attr('href', '/setViewportNormal');
-    $('#setViewportMobile').attr('href', '/setViewportMobile');
-    
-    return $.html();
+        
+    return [element];
 };
 
-const  hideImages = responseBody => {
-    $ = cheerio.load(responseBody);
-    $('img').remove();
-    return $.html();
+const makeFailureResponseBody = (res, reqUrl) => {
+    const templateData = {
+		theme: getTheme(),
+		sizing: getResponsiveSizing(),
+		reqUrl
+	};
+	
+	res.render('failure', templateData);
 };
 
-const makeFailureResponseBody = reqUrl => {
-    
-    let response = '';
-    
-    response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body>';
-    
-    response += '<div id="problem-div">';
-    response += '<p>Gundog experienced a problem.</p>';
-    response += '<p>You can try the requested url yourself:</p>';
-    response += '<a href="' + reqUrl + '">' + reqUrl + '</a>';
-    response += '</div>';
-    
-    response += '</body></html>';
-    
-    return response;
+const makeIndexPage = res => {
+	const templateData = {
+		theme: getTheme(),
+		sizing: getResponsiveSizing()
+	};
+	
+	res.render('index', templateData);
 };
 
-const  makeIndexPage = () => {
-    let response = '';
-    
-    response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body></br></br></br><div style="margin:0 auto" align=center> <h3>Gundog</h3><form action="/" method="GET"><input type="text" name="gundog_url" id="gundog-bar" value="" style="width: 95%;" autofocus /><br /></form></div></br></br></br><p>Give gundog a website address and it will return a stripped down version of the site.</p><p>Gundog was created for use with sites containing a lot of banners and scripts that made browsing tedious and for mobile browsing.</p><p>It will work well with pages containing a lot of text such as articles but not so well on other pages such as news front pages.</p></br></br></br><div style="text-align:center"><a id="preferences" href="">Preferences</a></div></body></html>'
-    
-    return response;
-};
+const makePreferencesPage = res => {
 
-const makePreferencesPage = () => {
-    let response = '';
-    
-    response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body>';
-    
-    response += '<h3>Gundog Preferences</h3>';
-    
-    if (cookies && cookies.theme && cookies.theme === 'dark') {
-       response += '<a id="setThemeLight" href="">Light Theme</a>';
-    } else {
-        response += '<a id="setThemeDark" href="">Dark Theme</a>';
-    }
-    
-    response += '</br>' ;
-    
-    if (cookies.hideImages === 'true') {
-       response += '<a id="setShowImages" href="">Show Images</a>';
-    } else {
-        response += '<a id="setHideImages" href="">Hide Images</a>';
-    }
-    
-    response += '</br></br>'
-    
-    response += '<a id="gunDogHome" href="gun_dog_home">Back</a>';
-    
-    response += '</body></html>';
-    
-    return response;
+	const templateData = {
+		theme: getTheme(),
+		sizing: getResponsiveSizing(),
+		cookies
+	};
+	
+	res.render('preferences', templateData);
 }
 
 
@@ -295,52 +240,40 @@ app.all("/*", function(req, res) {
     let reqUrl = req.url.substring(1);
     
     if (reqUrl.length === 0) {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(parseLinks(makeIndexPage()));
-        res.send();
+        makeIndexPage(res);
         return;
     }
     
     if (reqUrl === 'setHideImages') {
         res.cookie('hideImages', 'true');
         cookies.hideImages = 'true';
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(parseLinks(makePreferencesPage()));
-        res.send();
+        makePreferencesPage(res);
         return;
     }
     
     if (reqUrl === 'setShowImages') {
         res.cookie('hideImages', 'false');
         cookies.hideImages = 'false';
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(parseLinks(makePreferencesPage()));
-        res.send();
+        makePreferencesPage(res);
         return;
     }
  
     if (reqUrl === 'setThemeLight') {
         res.cookie('theme', 'light');
         cookies.theme = 'light';
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(parseLinks(makePreferencesPage()));
-        res.send();
+        makePreferencesPage(res);
         return;
     }
     
     if (reqUrl === 'setThemeDark') {
         res.cookie('theme', 'dark');
         cookies.theme = 'dark';
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(parseLinks(makePreferencesPage()));
-        res.send();
+        makePreferencesPage(res);
         return;
     }
        
     if (reqUrl === 'preferences') {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(parseLinks(makePreferencesPage()));
-        res.send();
+        makePreferencesPage(res);
         return;
     }
     
@@ -360,20 +293,12 @@ app.all("/*", function(req, res) {
     
     const decodedReqUrl = decodeURIComponent(reqUrl);
 
-    res.writeHead(200, {'Content-Type': 'text/html'});
-
     request(decodedReqUrl, function (error, response, body) {
         if (!error && response.statusCode == 200) {
-            const responseBody = makeResponseBody(body);
-            if (cookies && cookies.hideImages === 'true') {
-                responseBody = hideImages(responseBody);
-            }
-            res.write(parseLinks(responseBody, decodedReqUrl));
+            makeResponseBody(res, body, reqUrl);
         } else {
-            const responseBody = makeFailureResponseBody(decodedReqUrl);
-            res.write(responseBody);
+		    makeFailureResponseBody(res, decodedReqUrl);
         }
-        res.send();
     })
 });
 
