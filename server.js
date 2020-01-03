@@ -1,30 +1,33 @@
-var express  = require('express');
-var app      = express();
-var request = require('request');
-var http = require('http');
-var cheerio = require('cheerio');
-var url = require('url');
-var hashFnv32a = require('./scripts/hashFnv32a.js');
-var cookieParser = require('cookie-parser')
+const express  = require('express');
+const app      = express();
+const request = require('request');
+const http = require('http');
+const cheerio = require('cheerio');
+const url = require('url');
+const hashFnv32a = require('./scripts/hashFnv32a.js');
+const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
+let config;
+let SERVER_PORT;
 if (process.env.NODE && ~process.env.NODE.indexOf("heroku")) {
-    var config = require('./config.heroku.json');
-    var SERVER_PORT = process.env.PORT || 5000;
-    var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
-    var PROTOCOL = config.protocol;
+    config = require('./config.heroku.json');
+    SERVER_PORT = process.env.PORT || 5000;
 } else {
-    var config = require('./config.local.json');
-    var SERVER_PORT = config.hostPort;
-    var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
-    var PROTOCOL = config.protocol;
+    config = require('./config.local.json');
+    SERVER_PORT = config.hostPort;
 }
+
+const SERVER_EXTERNAL_ADDRESS = config.externalAddress;
+const PROTOCOL = config.protocol;
 app.set('port', SERVER_PORT);
+
+let cookies;
 
 function makeResponseBody(body) {
     $ = cheerio.load(body);
 
-    var responseBody = '';
+    let responseBody = '';
 
     responseBody += '<html><head><title>Gundog</title>';
     responseBody += getTheme();
@@ -35,9 +38,9 @@ function makeResponseBody(body) {
     
     responseBody += '<div style="text-align:center"><a id="gunDogHome" href="gun_dog_home">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="">Close Gun Dog</a></div></br></br>';
     
-    var usable_elements = 'p, h1, h2, h3, ul, ol';
+    const usable_elements = 'p, h1, h2, h3, ul, ol';
     
-    var number_elements = $(body).find(usable_elements).length;
+    const number_elements = $(body).find(usable_elements).length;
     
     // Print out elements like headers that might be useful
     // But only print out things like lists if we think we're in the main body of the page
@@ -47,7 +50,7 @@ function makeResponseBody(body) {
     hashedContent = [];
     mainContent = [];
     
-    for (var i = 0; i < number_elements; i++) {        
+    for (let i = 0; i < number_elements; i++) {        
         element = $(body).find(usable_elements).eq(i);
         /* Don't want the attributes we're given, e.g. classes, stylings.  So remove them.
          * Keep ids since they are needed for tests to pass and for internal links. */
@@ -65,7 +68,7 @@ function makeResponseBody(body) {
         
         if (isPreAmble) {
             preAmbleEmpty = false;
-            var elementsToAdd = parseElement(element, i);
+            let elementsToAdd = parseElement(element, i);
             
             elementsToAdd.forEach(function(el) {
                 preAmble += el;
@@ -73,10 +76,10 @@ function makeResponseBody(body) {
         }
         
         if (!isPreAmble) {
-            var elementsToAdd = parseElement(element, i);
+            let elementsToAdd = parseElement(element, i);
             
             elementsToAdd.forEach(function(el) {
-                var hashedEl = hashFnv32a(el.toString());
+                const hashedEl = hashFnv32a(el.toString());
                 
                 /* Don't add identical duplicates of an element.
                  * Could be a problem in some areas, but prevents
@@ -93,7 +96,7 @@ function makeResponseBody(body) {
     };
 
     if (!preAmbleEmpty) {
-        var togglePreAmbleButton = $('<button>Show site navigation</button>')
+        const togglePreAmbleButton = $('<button>Show site navigation</button>')
             .attr('id', 'togglePreAmbleButton')
             .attr('onclick', 'togglePreAmble()');
         responseBody += togglePreAmbleButton
@@ -120,7 +123,7 @@ function elementIsPreAmble(element) {
 };
 
 function parseElement(element, i) {
-    var elementsToAdd;
+    let elementsToAdd;
             
     if (element[0].name === 'ul' || element[0].name === 'ol') {
         elementsToAdd = parseList(element, i);
@@ -134,15 +137,14 @@ function parseElement(element, i) {
 };
 
 function parseList(element, i) {
-	var fistListItem = element.find('li').text().trim().split('\n')[0].substring(0, 15);
-	var elementsToAdd = [];
+	const fistListItem = element.find('li').text().trim().split('\n')[0].substring(0, 15);
+	const elementsToAdd = [];
 
     element.attr('id','list_' + i);
-	// TODO: add a toggle-list class to indent the list
 	element.attr('class', 'toggle-list');
     element.attr('style', 'display:none');
 	
-	var moreButton = $('<a> (show more...)</a>')
+	const moreButton = $('<a> (show more...)</a>')
 		.attr('id', 'button_' + i)
         .attr('onclick', 'toggleList(' + i + ')');
         
@@ -159,12 +161,12 @@ function parseAriaHidden(element) {
 };
 
 function parseLinks(responseBody, reqUrl) {
-    var hostname;
-    var fullPath;  // Path to the resource, example.com/directory/file.html
-    var parentPath;  // Path to the resource parent directory, example.com/directory
+    let hostname;
+    let fullPath;  // Path to the resource, example.com/directory/file.html
+    let parentPath;  // Path to the resource parent directory, example.com/directory
 
     if (reqUrl) {
-        var parsedUrl = new url.parse(reqUrl);
+        const parsedUrl = new url.parse(reqUrl);
         hostname = parsedUrl.hostname;
         fullPath  = parsedUrl.href;
         parentPath = fullPath.split('/');
@@ -175,10 +177,10 @@ function parseLinks(responseBody, reqUrl) {
     $ = cheerio.load(responseBody);
     
     $('a').each(function(index, value) {
-      var a = $(this);
+      const a = $(this);
       
       if (a.attr('href') && a.attr('href')[0]) {
-        var href = a.attr('href');
+        const href = a.attr('href');
         // Absolute link
         if (href.substring(0, 4) === 'http') {
             a.attr('href', PROTOCOL + '://' + SERVER_EXTERNAL_ADDRESS + '/?gundog_url=' + href);
@@ -215,7 +217,7 @@ function hideImages(responseBody) {
 
 function makeFailureResponseBody(reqUrl) {
     
-    var response = '';
+    let response = '';
     
     response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body>';
     
@@ -231,7 +233,7 @@ function makeFailureResponseBody(reqUrl) {
 };
 
 function makeIndexPage() {
-    var response = '';
+    let response = '';
     
     response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body></br></br></br><div style="margin:0 auto" align=center> <h3>Gundog</h3><form action="/" method="GET"><input type="text" name="gundog_url" id="gundog-bar" value="" style="width: 95%;" autofocus /><br /></form></div></br></br></br><p>Give gundog a website address and it will return a stripped down version of the site.</p><p>Gundog was created for use with sites containing a lot of banners and scripts that made browsing tedious and for mobile browsing.</p><p>It will work well with pages containing a lot of text such as articles but not so well on other pages such as news front pages.</p></br></br></br><div style="text-align:center"><a id="preferences" href="">Preferences</a></div></body></html>'
     
@@ -239,7 +241,7 @@ function makeIndexPage() {
 };
 
 function makePreferencesPage() {
-    var response = '';
+    let response = '';
     
     response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body>';
     
@@ -290,7 +292,7 @@ function getResponsiveSizing() {
 app.all("/*", function(req, res) {
     cookies = req.cookies;
     
-    var reqUrl = req.url.substring(1);
+    let reqUrl = req.url.substring(1);
     
     if (reqUrl.length === 0) {
         res.writeHead(200, {'Content-Type': 'text/html'});
@@ -356,19 +358,19 @@ app.all("/*", function(req, res) {
         reqUrl = 'http%3A%2F%2F' + reqUrl;
     }
     
-    reqUrl = decodeURIComponent(reqUrl);
+    const decodedReqUrl = decodeURIComponent(reqUrl);
 
     res.writeHead(200, {'Content-Type': 'text/html'});
 
-    request(reqUrl, function (error, response, body) {
+    request(decodedReqUrl, function (error, response, body) {
         if (!error && response.statusCode == 200) {
-            var responseBody = makeResponseBody(body);
+            const responseBody = makeResponseBody(body);
             if (cookies && cookies.hideImages === 'true') {
                 responseBody = hideImages(responseBody);
             }
-            res.write(parseLinks(responseBody, reqUrl));
+            res.write(parseLinks(responseBody, decodedReqUrl));
         } else {
-            var responseBody = makeFailureResponseBody(reqUrl);
+            const responseBody = makeFailureResponseBody(decodedReqUrl);
             res.write(responseBody);
         }
         res.send();
