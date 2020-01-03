@@ -24,7 +24,7 @@ app.set('port', SERVER_PORT);
 
 let cookies;
 
-function makeResponseBody(body) {
+const makeResponseBody = body => {
     $ = cheerio.load(body);
 
     let responseBody = '';
@@ -112,7 +112,7 @@ function makeResponseBody(body) {
     return responseBody;
 };
 
-function elementIsPreAmble(element) {
+const elementIsPreAmble = element => {
     // I've found that in practice most sites only use h1 for headers you actually want to see
     if (element.name === 'h1'
         || (element.name === 'p' && element.children[0] && element.children[0].type === 'text' && element.children[0].data.length > 3)) {
@@ -122,7 +122,7 @@ function elementIsPreAmble(element) {
     }
 };
 
-function parseElement(element, i) {
+const parseElement = (element, i) => {
     let elementsToAdd;
             
     if (element[0].name === 'ul' || element[0].name === 'ol') {
@@ -136,7 +136,7 @@ function parseElement(element, i) {
     return elementsToAdd;
 };
 
-function parseList(element, i) {
+const parseList = (element, i) => {
 	const fistListItem = element.find('li').text().trim().split('\n')[0].substring(0, 15);
 	const elementsToAdd = [];
 
@@ -154,13 +154,13 @@ function parseList(element, i) {
     return elementsToAdd;
 };
 
-function parseAriaHidden(element) {
+const parseAriaHidden = element => {
     element.attr('style', 'display:none');
     
     return [element];
 };
 
-function parseLinks(responseBody, reqUrl) {
+const parseLinks = (responseBody, reqUrl) => {
     let hostname;
     let fullPath;  // Path to the resource, example.com/directory/file.html
     let parentPath;  // Path to the resource parent directory, example.com/directory
@@ -209,13 +209,13 @@ function parseLinks(responseBody, reqUrl) {
     return $.html();
 };
 
-function hideImages(responseBody) {
+const  hideImages = responseBody => {
     $ = cheerio.load(responseBody);
     $('img').remove();
     return $.html();
 };
 
-function makeFailureResponseBody(reqUrl) {
+const makeFailureResponseBody = reqUrl => {
     
     let response = '';
     
@@ -232,7 +232,7 @@ function makeFailureResponseBody(reqUrl) {
     return response;
 };
 
-function makeIndexPage() {
+const  makeIndexPage = () => {
     let response = '';
     
     response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body></br></br></br><div style="margin:0 auto" align=center> <h3>Gundog</h3><form action="/" method="GET"><input type="text" name="gundog_url" id="gundog-bar" value="" style="width: 95%;" autofocus /><br /></form></div></br></br></br><p>Give gundog a website address and it will return a stripped down version of the site.</p><p>Gundog was created for use with sites containing a lot of banners and scripts that made browsing tedious and for mobile browsing.</p><p>It will work well with pages containing a lot of text such as articles but not so well on other pages such as news front pages.</p></br></br></br><div style="text-align:center"><a id="preferences" href="">Preferences</a></div></body></html>'
@@ -240,7 +240,7 @@ function makeIndexPage() {
     return response;
 };
 
-function makePreferencesPage() {
+const makePreferencesPage = () => {
     let response = '';
     
     response += '<html><head><title>Gundog</title>' + getTheme() + getResponsiveSizing() + '</head><body>';
@@ -271,7 +271,7 @@ function makePreferencesPage() {
 }
 
 
-function getTheme() {
+const getTheme = () => {
     // Thanks to http://bettermotherfuckingwebsite.com for bulk of the styling
     cookies = cookies || [];
     
@@ -282,7 +282,7 @@ function getTheme() {
     }
 }
 
-function getResponsiveSizing() {
+const getResponsiveSizing = () => {
     returnString = '<link rel="stylesheet" type="text/css" href="static/style/responsive_sizing.css">';
     returnString += '<meta name="viewport" content="width=device-width, initial-scale=1">';
     
