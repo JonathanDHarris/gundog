@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+	<%- include('head', {protocol, severExternalAddress, cookies} ) %>
+	<body>
+		<script src=<%= protocol %>://<%= severExternalAddress %>/static/scripts/toggleList.js></script>
+		<script src=<%= protocol %>://<%= severExternalAddress %>/static/scripts/togglePreAmble.js></script>
+		
+		<div id="gundog-div">
+		<div style="text-align:center">
+			<a id="gunDogHome" href="<%= protocol %>://<%= severExternalAddress %>/">Gun Dog Home</a>&nbsp;&nbsp;&nbsp;<a id="closeGunDog" href="<%= reqUrl %>">Close Gun Dog</a>
+		</div>
+		</br></br>
+		
+		<% if(!preAmbleEmpty) { %>
+			<button id="togglePreAmbleButton" onclick="togglePreAmble()">Show site navigation</button>
+			<div id="gunDogPreAmble" style="display:none">
+				<% preAmble.forEach(el => {%>
+					<%- el %>			
+				<% }); %>
+			</div>
+		<%}; %>
+		
+		
+		<% content.forEach(el => { %>
+			<%- el %>
+		<% }); %>
+	</body>
+</html>

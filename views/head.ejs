@@ -1,0 +1,10 @@
+<head>
+	<title>Gundog</title>
+	<% if (cookies.theme === 'dark') { %>
+		<link rel="stylesheet" type="text/css" href="<%= protocol %>://<%= severExternalAddress %>/static/style/theme_dark.css">
+	<% } else { %>
+		<link rel="stylesheet" type="text/css" href="<%= protocol %>://<%= severExternalAddress %>/static/style/theme_default.css">
+	<% } %>
+	<link rel="stylesheet" type="text/css" href="static/style/responsive_sizing.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>

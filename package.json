@@ -6,6 +6,7 @@
   "dependencies": {
     "cheerio": "^0.20.0",
     "cookie-parser": "^1.4.3",
+    "ejs": "^3.0.1",
     "express": "^4.13.4",
     "http": "0.0.0",
     "http-proxy": "^1.13.2",

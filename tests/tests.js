@@ -1,7 +1,7 @@
 import { Selector } from 'testcafe';
 
 var config;
-config = require('../config.' + process.env.NODE_ENV + '.json');
+config = require('../config.local.json');
 var SERVER_EXTERNAL_ADDRESS = config.externalAddress;
 
 fixture `Home page`

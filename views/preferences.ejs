@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+	<%- include('head', {protocol, severExternalAddress, cookies} ) %>
+	<body>
+		<% if(cookies && cookies.theme && cookies.theme === 'dark') { %>
+			<a id="setThemeLight" href="/setThemeLight">Light Theme</a>
+		<% } else { %>
+			<a id="setThemeDark" href="/setThemeDark">Dark Theme</a>
+		<% } %>
+		</br>
+		<% if(cookies && cookies.hideImages === 'true') { %>
+			<a id="setThemeLight" href="/setShowImages">Show Images</a>
+		<% } else { %>
+			<a id="setThemeDark" href="/setHideImages">Hide Images</a>
+		<% } %>
+		</br>
+		<a id="gunDogHome" href="/">Back</a>
+	</body>
+</html>
