@@ -94,10 +94,9 @@ const makeResponseBody = (res, body, reqUrl) => {
     };
 
 	const templateData = {
-		theme: getTheme(),
-		sizing: getResponsiveSizing(),
 		protocol: PROTOCOL,
 		severExternalAddress: SERVER_EXTERNAL_ADDRESS,
+		cookies,
 		reqUrl,
 		preAmbleEmpty,
 		preAmble,
@@ -187,8 +186,9 @@ const parseLinks = (element, reqUrl) => {
 
 const makeFailureResponseBody = (res, reqUrl) => {
     const templateData = {
-		theme: getTheme(),
-		sizing: getResponsiveSizing(),
+		protocol: PROTOCOL,
+		severExternalAddress: SERVER_EXTERNAL_ADDRESS,
+		cookies,
 		reqUrl
 	};
 	
@@ -197,8 +197,9 @@ const makeFailureResponseBody = (res, reqUrl) => {
 
 const makeIndexPage = res => {
 	const templateData = {
-		theme: getTheme(),
-		sizing: getResponsiveSizing()
+		protocol: PROTOCOL,
+		severExternalAddress: SERVER_EXTERNAL_ADDRESS,
+		cookies
 	};
 	
 	res.render('index', templateData);
@@ -206,31 +207,12 @@ const makeIndexPage = res => {
 
 const makePreferencesPage = res => {
 	const templateData = {
-		theme: getTheme(),
-		sizing: getResponsiveSizing(),
+		protocol: PROTOCOL,
+		severExternalAddress: SERVER_EXTERNAL_ADDRESS,
 		cookies
 	};
 	
 	res.render('preferences', templateData);
-}
-
-
-const getTheme = () => {
-    // Thanks to http://bettermotherfuckingwebsite.com for bulk of the styling
-    cookies = cookies || [];
-    
-    if (cookies.theme === 'dark') {
-        return '<link rel="stylesheet" type="text/css" href="static/style/theme_dark.css">';
-    } else {
-        return '<link rel="stylesheet" type="text/css" href="static/style/theme_default.css">';
-    }
-}
-
-const getResponsiveSizing = () => {
-    returnString = '<link rel="stylesheet" type="text/css" href="static/style/responsive_sizing.css">';
-    returnString += '<meta name="viewport" content="width=device-width, initial-scale=1">';
-    
-    return returnString;
 }
 
 app.all("/*", (req, res) => {

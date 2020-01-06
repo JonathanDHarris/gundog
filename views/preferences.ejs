@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-	<%- include('head', {theme, sizing} ) %>
+	<%- include('head', {protocol, severExternalAddress, cookies} ) %>
 	<body>
 		<% if(cookies && cookies.theme && cookies.theme === 'dark') { %>
 			<a id="setThemeLight" href="/setThemeLight">Light Theme</a>
