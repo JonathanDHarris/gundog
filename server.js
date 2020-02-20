@@ -1,5 +1,6 @@
 const express  = require('express');
 const app      = express();
+const puppeteer = require('puppeteer');
 const request = require('request');
 const http = require('http');
 const cheerio = require('cheerio');
@@ -27,6 +28,7 @@ app.set('port', SERVER_PORT);
 let cookies;
 
 const makeResponseBody = (res, body, reqUrl) => {
+	console.log(body);
     $ = cheerio.load(body);
 
     let responseBody = '';
@@ -215,7 +217,7 @@ const makePreferencesPage = res => {
 	res.render('preferences', templateData);
 }
 
-app.all("/*", (req, res) => {
+app.all("/*", async (req, res) => {
     cookies = req.cookies;
     
     let reqUrl = req.url.substring(1);
@@ -273,7 +275,17 @@ app.all("/*", (req, res) => {
     }
     
     const decodedReqUrl = decodeURIComponent(reqUrl);
+	
+	const browser = await puppeteer.launch();
 
+	const page = await browser.newPage();
+	await page.goto(decodedReqUrl);
+	
+	const body = await page.content();
+	
+    makeResponseBody(res, body, reqUrl);
+
+/*
     request(decodedReqUrl, (error, response, body) => {
         if (!error && response.statusCode == 200) {
             makeResponseBody(res, body, reqUrl);
@@ -281,6 +293,7 @@ app.all("/*", (req, res) => {
 		    makeFailureResponseBody(res, decodedReqUrl);
         }
     })
+	*/
 });
 
 app.listen(app.get('port'), () => {
