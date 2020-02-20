@@ -25,6 +25,7 @@ const SERVER_EXTERNAL_ADDRESS = config.externalAddress;
 const PROTOCOL = config.protocol;
 app.set('port', SERVER_PORT);
 
+let browser;
 let cookies;
 
 const makeResponseBody = (res, body, reqUrl, checkForPreAmble=true) => {
@@ -278,8 +279,6 @@ app.all("/*", async (req, res) => {
     }
     
     const decodedReqUrl = decodeURIComponent(reqUrl);
-	
-	const browser = await puppeteer.launch();
 
 	const page = await browser.newPage();
 	try {
@@ -291,6 +290,7 @@ app.all("/*", async (req, res) => {
 	}
 });
 
-app.listen(app.get('port'), () => {
+app.listen(app.get('port'), async () => {
+  browser = await puppeteer.launch();
   console.log('Node app is running on port', app.get('port'));
 });
