@@ -27,8 +27,7 @@ app.set('port', SERVER_PORT);
 
 let cookies;
 
-const makeResponseBody = (res, body, reqUrl) => {
-	console.log(body);
+const makeResponseBody = (res, body, reqUrl, checkForPreAmble=true) => {
     $ = cheerio.load(body);
 
     let responseBody = '';
@@ -39,7 +38,7 @@ const makeResponseBody = (res, body, reqUrl) => {
     
     // Print out elements like headers that might be useful
     // But only print out things like lists if we think we're in the main body of the page
-    isPreAmble = true;
+    isPreAmble = checkForPreAmble;
     preAmbleEmpty = true;
     preAmble = [];
     hashedContent = [];
@@ -74,8 +73,8 @@ const makeResponseBody = (res, body, reqUrl) => {
                 preAmble.push(el.toString());
             });
         }
-        
         if (!isPreAmble) {
+        
             let elementsToAdd = parseElement(element, i, reqUrl);
             
             elementsToAdd.forEach(el => {
@@ -105,7 +104,11 @@ const makeResponseBody = (res, body, reqUrl) => {
 		content: mainContent
 	};
 	
-	res.render('gundog', templateData);
+	if (mainContent.length === 0) {
+		makeResponseBody(res, body, reqUrl, checkForPreAmble=false)
+	} else {	
+		res.render('gundog', templateData);
+	}
 };
 
 const elementIsPreAmble = element => {
