@@ -282,21 +282,13 @@ app.all("/*", async (req, res) => {
 	const browser = await puppeteer.launch();
 
 	const page = await browser.newPage();
-	await page.goto(decodedReqUrl);
-	
-	const body = await page.content();
-	
-    makeResponseBody(res, body, reqUrl);
-
-/*
-    request(decodedReqUrl, (error, response, body) => {
-        if (!error && response.statusCode == 200) {
-            makeResponseBody(res, body, reqUrl);
-        } else {
-		    makeFailureResponseBody(res, decodedReqUrl);
-        }
-    })
-	*/
+	try {
+		await page.goto(decodedReqUrl);
+		const body = await page.content();
+		makeResponseBody(res, body, reqUrl);
+	} catch (e){
+		makeFailureResponseBody(res, decodedReqUrl);
+	}
 });
 
 app.listen(app.get('port'), () => {
