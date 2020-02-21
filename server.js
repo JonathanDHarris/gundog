@@ -1,5 +1,6 @@
 const express  = require('express');
 const app      = express();
+const puppeteer = require('puppeteer');
 const request = require('request');
 const http = require('http');
 const cheerio = require('cheerio');
@@ -24,9 +25,10 @@ const SERVER_EXTERNAL_ADDRESS = config.externalAddress;
 const PROTOCOL = config.protocol;
 app.set('port', SERVER_PORT);
 
+let browser;
 let cookies;
 
-const makeResponseBody = (res, body, reqUrl) => {
+const makeResponseBody = (res, body, reqUrl, checkForPreAmble=true) => {
     $ = cheerio.load(body);
 
     let responseBody = '';
@@ -37,7 +39,7 @@ const makeResponseBody = (res, body, reqUrl) => {
     
     // Print out elements like headers that might be useful
     // But only print out things like lists if we think we're in the main body of the page
-    isPreAmble = true;
+    isPreAmble = checkForPreAmble;
     preAmbleEmpty = true;
     preAmble = [];
     hashedContent = [];
@@ -72,8 +74,8 @@ const makeResponseBody = (res, body, reqUrl) => {
                 preAmble.push(el.toString());
             });
         }
-        
         if (!isPreAmble) {
+        
             let elementsToAdd = parseElement(element, i, reqUrl);
             
             elementsToAdd.forEach(el => {
@@ -103,7 +105,11 @@ const makeResponseBody = (res, body, reqUrl) => {
 		content: mainContent
 	};
 	
-	res.render('gundog', templateData);
+	if (mainContent.length === 0) {
+		makeResponseBody(res, body, reqUrl, checkForPreAmble=false)
+	} else {	
+		res.render('gundog', templateData);
+	}
 };
 
 const elementIsPreAmble = element => {
@@ -215,7 +221,7 @@ const makePreferencesPage = res => {
 	res.render('preferences', templateData);
 }
 
-app.all("/*", (req, res) => {
+app.all("/*", async (req, res) => {
     cookies = req.cookies;
     
     let reqUrl = req.url.substring(1);
@@ -274,15 +280,17 @@ app.all("/*", (req, res) => {
     
     const decodedReqUrl = decodeURIComponent(reqUrl);
 
-    request(decodedReqUrl, (error, response, body) => {
-        if (!error && response.statusCode == 200) {
-            makeResponseBody(res, body, reqUrl);
-        } else {
-		    makeFailureResponseBody(res, decodedReqUrl);
-        }
-    })
+	const page = await browser.newPage();
+	try {
+		await page.goto(decodedReqUrl);
+		const body = await page.content();
+		makeResponseBody(res, body, decodedReqUrl);
+	} catch (e){
+		makeFailureResponseBody(res, decodedReqUrl);
+	}
 });
 
-app.listen(app.get('port'), () => {
+app.listen(app.get('port'), async () => {
+  browser = await puppeteer.launch();
   console.log('Node app is running on port', app.get('port'));
 });
