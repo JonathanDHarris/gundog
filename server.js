@@ -284,7 +284,7 @@ app.all("/*", async (req, res) => {
 	try {
 		await page.goto(decodedReqUrl);
 		const body = await page.content();
-		makeResponseBody(res, body, reqUrl);
+		makeResponseBody(res, body, decodedReqUrl);
 	} catch (e){
 		makeFailureResponseBody(res, decodedReqUrl);
 	}
