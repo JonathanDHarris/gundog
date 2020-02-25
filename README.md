@@ -14,7 +14,11 @@ Here is an example of a webpage without gundog
 
 You can host your own gundog server locally, or use https://gundog.herokuapp.com
 
-** Testing **
+The heroku version uses the following buildpack:
+[https://github.com/jontewks/puppeteer-heroku-buildpack](https://github.com/jontewks/puppeteer-heroku-buildpack)
+
+**Testing**
+
 Tests are run using [TestCafe](https://devexpress.github.io/testcafe/documentation/getting-started/)
  * Install TestCafe if required `npm install -g testcafe`
  * Check the test website is responding `testcafe chrome tests/pretests.js`
