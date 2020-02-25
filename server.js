@@ -225,6 +225,8 @@ app.all("/*", async (req, res) => {
     cookies = req.cookies;
     
     let reqUrl = req.url.substring(1);
+	
+	console.log('reqUrl:', reqUrl);
     
     if (reqUrl.length === 0) {
         makeIndexPage(res);
