@@ -230,6 +230,10 @@ app.all("/*", async (req, res) => {
         makeIndexPage(res);
         return;
     }
+	
+	if (reqUrl === 'favicon.ico') {
+		return;
+	}
     
     if (reqUrl === 'setHideImages') {
         res.cookie('hideImages', 'true');
