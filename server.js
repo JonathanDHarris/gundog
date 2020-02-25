@@ -17,7 +17,7 @@ let isHeroku;
 
 if (process.env.NODE && ~process.env.NODE.indexOf("heroku")) {
     config = require('./config.heroku.json');
-    SERVER_PORT = process.env.PORT || 5000;
+    SERVER_PORT = process.env.PORT || 8080;
 	isHeroku = true;
 } else {
     config = require('./config.local.json');
