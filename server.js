@@ -29,6 +29,7 @@ const SERVER_EXTERNAL_ADDRESS = config.externalAddress;
 const PROTOCOL = config.protocol;
 app.set('port', SERVER_PORT);
 
+let browser;
 let cookies;
 
 const makeResponseBody = (res, body, reqUrl, checkForPreAmble=true) => {
@@ -288,14 +289,6 @@ app.all("/*", async (req, res) => {
     
     const decodedReqUrl = decodeURIComponent(reqUrl);
 	
-	const puppeteerConfig = { args: [] };
-	if (isHeroku === true) {
-		puppeteerConfig.args = ['--no-sandbox', '--disable-setuid-sandbox']
-	}
-
-	console.log('server port:', process.env.PORT, app.get('port'))
-	console.log('puppeteer config:', puppeteerConfig);
-    const browser = await puppeteer.launch(puppeteerConfig);
 	const page = await browser.newPage();
 	try {
 		await page.goto(decodedReqUrl);
@@ -308,4 +301,13 @@ app.all("/*", async (req, res) => {
 
 app.listen(app.get('port'), async () => {
   console.log('Node app is running on port', app.get('port'));
+  
+  	const puppeteerConfig = { args: [] };
+	if (isHeroku === true) {
+		puppeteerConfig.args = ['--no-sandbox', '--disable-setuid-sandbox']
+	}
+
+	console.log('puppeteer config:', puppeteerConfig);
+    browser = await puppeteer.launch(puppeteerConfig);
+	console.log('puppeteer launched successfully');
 });
