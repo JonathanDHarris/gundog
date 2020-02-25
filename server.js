@@ -293,6 +293,7 @@ app.all("/*", async (req, res) => {
 		puppeteerConfig.args = ['--no-sandbox', '--disable-setuid-sandbox']
 	}
 
+	console.log('server port:', process.env.PORT, app.get('port'))
 	console.log('puppeteer config:', puppeteerConfig);
     const browser = await puppeteer.launch(puppeteerConfig);
 	const page = await browser.newPage();
