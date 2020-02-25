@@ -284,7 +284,7 @@ app.all("/*", async (req, res) => {
     
     const decodedReqUrl = decodeURIComponent(reqUrl);
 
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 	const page = await browser.newPage();
 	try {
 		await page.goto(decodedReqUrl);
