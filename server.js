@@ -234,6 +234,7 @@ app.all("/*", async (req, res) => {
     }
 	
 	if (reqUrl === 'favicon.ico') {
+		res.sendStatus(200);
 		return;
 	}
     
