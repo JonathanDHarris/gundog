@@ -13,12 +13,16 @@ app.set('view engine', 'ejs');
 
 let config;
 let SERVER_PORT;
+let isHeroku;
+
 if (process.env.NODE && ~process.env.NODE.indexOf("heroku")) {
     config = require('./config.heroku.json');
     SERVER_PORT = process.env.PORT || 5000;
+	isHeroku = true;
 } else {
     config = require('./config.local.json');
     SERVER_PORT = config.hostPort;
+	isHeroku = false;
 }
 
 const SERVER_EXTERNAL_ADDRESS = config.externalAddress;
@@ -283,8 +287,14 @@ app.all("/*", async (req, res) => {
     }
     
     const decodedReqUrl = decodeURIComponent(reqUrl);
+	
+	const puppeteerConfig = { args: [] };
+	if (isHeroku === true) {
+		puppeteerConfig.args = ['--no-sandbox', '--disable-setuid-sandbox']
+	}
 
-    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+	console.log('puppeteer config:', puppeteerConfig);
+    const browser = await puppeteer.launch(puppeteerConfig);
 	const page = await browser.newPage();
 	try {
 		await page.goto(decodedReqUrl);
