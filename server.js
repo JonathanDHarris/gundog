@@ -36,11 +36,7 @@ const makeResponseBody = (res, body, reqUrl, checkForPreAmble=true) => {
     $ = cheerio.load(body);
 
     let responseBody = '';
-    
-    const usableElements = 'p, h1, h2, h3, ul, ol, figure, img';
-    
-    const numberElements = $(body).find(usableElements).length;
-    
+      
     // Print out elements like headers that might be useful
     // But only print out things like lists if we think we're in the main body of the page
     isPreAmble = checkForPreAmble;
@@ -48,9 +44,15 @@ const makeResponseBody = (res, body, reqUrl, checkForPreAmble=true) => {
     preAmble = [];
     hashedContent = [];
     mainContent = [];
-    
+	
+	const usableElementsTags = 'p, h1, h2, h3, ul, ol, figure, img';
+		
+	const usableElements = $(body).find(usableElementsTags);
+	    
+    const numberElements = usableElements.length;  
+  
     for (let i = 0; i < numberElements; i++) {        
-        element = $(body).find(usableElements).eq(i);
+        element = usableElements.eq(i);
 
 		if (cookies.hideImages === 'true') {
 		 element.find('img').remove();
