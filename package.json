@@ -7,7 +7,7 @@
     "cheerio": "^0.20.0",
     "cookie-parser": "^1.4.3",
     "ejs": "^3.0.1",
-    "express": "^4.13.4",
+    "express": "^4.17.3",
     "http": "0.0.0",
     "http-proxy": "^1.13.2",
     "puppeteer": "^2.1.1",
